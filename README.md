@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# way2go.cloud
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Natural Language Cloud Architecture Visualizer**
 
-Currently, two official plugins are available:
+way2go.cloud is an enterprise-grade platform that transforms natural language descriptions into high-fidelity cloud architecture diagrams. By leveraging advanced generative models and Mermaid.js, it allows architects and engineers to quickly prototype and visualize complex infrastructure topologies.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Key Features
 
-## React Compiler 
+- **Natural Language Synthesis**: Describe your infrastructure in plain English and get an instant visual representation.
+- **Dark Mode Architect Theme**: A premium, high-contrast interface designed for professional cloud architects.
+- **Glassmorphism Editor**: A clean, focused environment for writing infrastructure specifications.
+- **High-Contrast Canvas**: Optimized diagram rendering for maximum legibility and presentation quality.
+- **Enterprise Integration**: Export diagrams as SVG or copy Mermaid code directly into your documentation.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend**: React 19, Vite 8, Tailwind CSS v4
+- **Rendering**: Mermaid.js
+- **Backend**: Cloudflare Workers & AI (Llama 3.1)
+- **Deployment**: Cloudflare Pages (Unified Workers Assets)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Describe**: Enter a description of your architecture in the "Design Specification" panel.
+2. **Generate**: Click "Generate Architecture" to synthesize the diagram.
+3. **Refine**: Adjust your description to add detail or modify the topology.
+4. **Export**: Use the preview tools to copy the code or export the SVG for use in professional reports or design documents.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Configuration
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The application uses a `wrangler.toml` for deployment on Cloudflare. Ensure your environment has the necessary AI bindings configured if you are self-hosting.
+
+```toml
+name = "way2go-cloud"
+compatibility_date = "2026-05-15"
+
+[assets]
+directory = "./dist"
+
+[ai]
+binding = "AI"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+&copy; 2026 way2go.cloud. All rights reserved.

@@ -1,37 +1,22 @@
 # Project Specification: way2go.cloud
 
 ## Overview
-**way2go.cloud** is a zero-cost, serverless Cloud Architecture Architect tool. It allows users to describe software infrastructure in plain English and instantly generates visual diagrams using Mermaid.js.
+**way2go.cloud** is a premium, serverless Cloud Architecture Visualizer. It allows architects to describe software infrastructure in plain English and instantly generates high-fidelity visual diagrams using Mermaid.js.
 
 ## Technical Requirements
 - **Hosting:** Cloudflare Pages (Direct Integration via GitHub).
 - **Domain:** way2go.cloud (Managed via Cloudflare).
-- **Backend/AI:** Cloudflare Workers AI (Running Llama 3.1 or Mistral).
-- **Frontend:** React + Vite (Tailwind CSS for styling).
+- **Backend/AI:** Cloudflare Workers AI (Running Llama 3.1).
+- **Frontend:** React + Vite (Tailwind CSS v4).
 - **Visuals:** Mermaid.js (Client-side rendering).
-- **Cost Target:** $0.00/month (utilizing free tiers).
+- **Branding:** Enterprise-grade "Dark Mode Architect" theme.
 
-## Local Environment (Bantu-Bot AI Lab)
-- **Device:** Windows 11 ARM64 (Snapdragon X Elite).
-- **User Identity:** bantu.the.bot@gmail.com.
-- **Workflow:** Stateless recovery via GitHub (Private Repo) and Gmail-linked MFA.
-
-## Setup Instructions for Gemini CLI
-1. **Repository Initialization:**
-   - Initialize a local Git repository.
-   - Link to a private GitHub repository under the service account.
-2. **Cloudflare Configuration:**
-   - Install `wrangler` (Cloudflare CLI).
-   - Configure a Cloudflare Pages project linked to the GitHub repo.
-   - Bind the `Workers AI` catalog to the project.
-3. **Project Scaffolding:**
-   - Initialize a Vite + React (TypeScript) project.
-   - Install `mermaid` and `@cloudflare/workers-types`.
-4. **Environment Secrets:**
-   - Set up Cloudflare API tokens for deployment via GitHub Actions or Wrangler.
+## Infrastructure Design
+- **Platform:** Cloudflare Ecosystem.
+- **Workflow:** Automated CI/CD via GitHub Actions and Cloudflare Pages.
 
 ## Feature Roadmap
-- **Input:** Natural language text area.
+- **Input:** Natural language text area with glassmorphism styling.
 - **Processing:** Worker AI prompt engineering to ensure valid Mermaid.js output.
 - **Output:** Live SVG rendering of the architecture.
-- **Shareability:** URL-encoded project states (no database required).
+- **Tools:** Export to SVG and copy Mermaid code functionality.
