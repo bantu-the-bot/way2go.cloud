@@ -56,15 +56,17 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate diagram')
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with ${response.status}`);
       }
 
       const data = await response.json()
       if (data.chart) {
         setChart(data.chart)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Generation error:', error)
+      alert(`Architecture Synthesis Failed: ${error.message}`);
     } finally {
       setIsLoading(false)
     }
