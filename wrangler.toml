@@ -7,3 +7,11 @@ directory = "./dist"
 
 [ai]
 binding = "AI"
+
+[[routes]]
+pattern = "way2go.cloud/*"
+zone_name = "way2go.cloud"
+
+[[routes]]
+pattern = "www.way2go.cloud/*"
+zone_name = "way2go.cloud"
