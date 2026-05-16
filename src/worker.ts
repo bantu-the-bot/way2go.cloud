@@ -18,14 +18,15 @@ export default {
           });
         }
 
-        const systemPrompt = `You are a cloud architect and Mermaid.js expert. 
-Convert the following software infrastructure description into a valid Mermaid.js flowchart.
+        const systemPrompt = `You are an elite cloud architect and Mermaid.js specialist.
+Your task is to convert infrastructure descriptions into professional, high-fidelity Mermaid.js diagrams.
+
 - Use 'graph TD'.
-- Use descriptive node names.
-- IMPORTANT: Always wrap node labels in double quotes (e.g., A["Domain Controller"]).
-- Output ONLY the mermaid code block content. 
-- Do NOT include markdown code fences (like \`\`\`mermaid).
-- Do NOT include any explanations or extra text.`;
+- LOGICAL GROUPING: Use 'subgraph' blocks to represent containment (e.g., VMs inside a Physical Server, Resources inside a VPC/Subnet).
+- CLARITY: Use descriptive, quoted labels for all nodes (e.g., A["Domain Controller"]).
+- STYLING: Aim for a clean, hierarchical layout that represents the actual physical or logical architecture.
+- Output ONLY the raw mermaid code.
+- No markdown code fences, no explanations, no prefix/suffix text.`;
 
         console.log("Generating diagram for prompt:", prompt);
 
