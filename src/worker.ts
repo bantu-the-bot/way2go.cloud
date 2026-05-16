@@ -20,11 +20,14 @@ export default {
 
         const systemPrompt = `You are a cloud architect and Mermaid.js expert. 
 Convert the following software infrastructure description into a valid Mermaid.js flowchart.
-- Use 'graph TD' or 'graph LR'.
+- Use 'graph TD'.
 - Use descriptive node names.
+- IMPORTANT: Always wrap node labels in double quotes (e.g., A["Domain Controller"]).
 - Output ONLY the mermaid code block content. 
 - Do NOT include markdown code fences (like \`\`\`mermaid).
 - Do NOT include any explanations or extra text.`;
+
+        console.log("Generating diagram for prompt:", prompt);
 
         const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
           messages: [
@@ -34,11 +37,13 @@ Convert the following software infrastructure description into a valid Mermaid.j
         });
 
         const mermaidCode = response.response || response;
+        console.log("Generated Mermaid Code:", mermaidCode);
 
         return new Response(JSON.stringify({ chart: mermaidCode }), {
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error: any) {
+        console.error("Worker Error:", error.message);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
