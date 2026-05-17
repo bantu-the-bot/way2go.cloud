@@ -38,11 +38,34 @@ function App() {
   const [input, setInput] = useState('')
   const [chart, setChart] = useState('graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]')
   const [isLoading, setIsLoading] = useState(false)
-  const [history] = useState([
-    { id: 1, title: 'Serverless Edge Architecture', date: '2026-05-15' },
-    { id: 2, title: 'Multi-Region Auth Flow', date: '2026-05-14' },
-    { id: 3, title: 'K8s Cluster Topology', date: '2026-05-12' },
+  const [examples] = useState([
+    {
+      id: 1,
+      title: 'E-Commerce Order Journey',
+      category: 'Process Flow',
+      inputText: 'A customer places an order online. The payment is approved. The warehouse packs the items. The courier picks up the package. The package is delivered to the customer\'s doorstep.',
+      chartState: 'graph LR\n    A["Order Placed"] --> B["Payment Approved"]\n    B --> C["Warehouse Packing"]\n    C --> D["Courier Pickup"]\n    D --> E["Delivered"]'
+    },
+    {
+      id: 2,
+      title: 'Morning Routine Logic',
+      category: 'Decision Tree',
+      inputText: 'Wake up at 6 AM. Check energy levels. If feeling tired, drink a glass of water and stretch for 5 minutes. If feeling alert, go straight to making coffee. Afterward, brush teeth, eat breakfast, and start the workday.',
+      chartState: 'graph TD\n    A["Wake up at 6 AM"] --> B{"Feeling Tired?"}\n    B -- "Yes" --> C["Water & Stretch"]\n    B -- "No" --> D["Make Coffee"]\n    C --> E["Brush Teeth"]\n    D --> E\n    E --> F["Eat Breakfast"]\n    F --> G["Start Workday"]'
+    },
+    {
+      id: 3,
+      title: 'Product Launch Strategy',
+      category: 'Mind Map',
+      inputText: 'Our Core Marketing Strategy splits into three main channels: Social Media, Content Marketing, and Paid Ads. Under Social Media, we will target TikTok and Instagram. Content Marketing will consist of weekly Blogs and Newsletters. Paid Ads will run on Google and Meta.',
+      chartState: 'graph TD\n    Core["Product Launch"] --> SM["Social Media"]\n    Core --> CM["Content Marketing"]\n    Core --> PA["Paid Ads"]\n    SM --> TikTok["TikTok"]\n    SM --> IG["Instagram"]\n    CM --> Blogs["Blogs"]\n    CM --> NL["Newsletters"]\n    PA --> Google["Google"]\n    PA --> Meta["Meta"]'
+    }
   ])
+
+  const loadExample = (example: typeof examples[0]) => {
+    setInput(example.inputText)
+    setChart(example.chartState)
+  }
 
   const handleGenerate = async () => {
     if (!input.trim()) return
@@ -101,15 +124,18 @@ function App() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Recent Architectures</h3>
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Examples</h3>
           <nav className="space-y-1">
-            {history.map((item) => (
+            {examples.map((item) => (
               <button
                 key={item.id}
-                className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-slate-800 transition-colors group"
+                onClick={() => loadExample(item)}
+                className="w-full text-left px-3 py-3 rounded-md text-sm hover:bg-slate-800 transition-colors group"
               >
-                <div className="font-medium truncate">{item.title}</div>
-                <div className="text-xs text-slate-500">{item.date}</div>
+                <div className="font-medium text-slate-200 mb-1 leading-snug">{item.title}</div>
+                <span className="inline-block px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tight group-hover:bg-slate-700 group-hover:text-slate-400">
+                  {item.category}
+                </span>
               </button>
             ))}
           </nav>
