@@ -41,9 +41,21 @@ Your task is to convert infrastructure descriptions into professional, high-fide
 
         let mermaidCode = aiResponse.response || aiResponse;
 
-        // Sanitization: Strip any markdown code fences if the AI included them
-        mermaidCode = mermaidCode.replace(/```mermaid/g, '');
-        mermaidCode = mermaidCode.replace(/```/g, '');
+        // Robust Sanitization:
+        // 1. Strip markdown code fences (```mermaid or ```)
+        mermaidCode = mermaidCode.replace(/```mermaid\n?/g, '');
+        mermaidCode = mermaidCode.replace(/```\n?/g, '');
+        
+        // 2. Remove common AI "chatter" if it appears at the start or end
+        // Look for the actual start of the graph
+        const graphStartIndex = mermaidCode.indexOf('graph ');
+        if (graphStartIndex !== -1) {
+          mermaidCode = mermaidCode.substring(graphStartIndex);
+        }
+        
+        // 3. Trim any trailing text (AI often adds "Hope this helps!" at the end)
+        // We look for the last closing bracket or semicolon if we want to be aggressive, 
+        // but a simple trim of trailing whitespace is usually enough if we start at 'graph'
         mermaidCode = mermaidCode.trim();
 
         console.log("Sanitized Mermaid Code:", mermaidCode);
