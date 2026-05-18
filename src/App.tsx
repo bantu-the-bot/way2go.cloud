@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import mermaid from 'mermaid'
+import { getVersionString } from './versionConfig'
 
 mermaid.initialize({
   startOnLoad: true,
@@ -87,9 +88,10 @@ function App() {
       if (data.chart) {
         setChart(data.chart)
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Generation error:', error)
-      alert(`Architecture Synthesis Failed: ${error.message}`);
+      alert(`Architecture Synthesis Failed: ${message}`);
     } finally {
       setIsLoading(false)
     }
@@ -141,7 +143,7 @@ function App() {
           </nav>
         </div>
         <div className="p-4 border-t border-slate-800">
-          <div className="text-xs text-slate-500 px-2">v2.4.0 Enterprise Edition</div>
+          <div className="text-xs text-slate-500 px-2 font-mono">{getVersionString()} Enterprise Edition</div>
         </div>
       </aside>
 

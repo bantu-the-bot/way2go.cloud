@@ -1,5 +1,7 @@
 interface Env {
-  AI: any;
+  AI: {
+    run: (model: string, options: Record<string, unknown>) => Promise<{ response?: string }>;
+  };
 }
 
 export default {
@@ -63,9 +65,10 @@ Your task is to convert infrastructure descriptions into professional, high-fide
         return new Response(JSON.stringify({ chart: mermaidCode }), {
           headers: { 'Content-Type': 'application/json' },
         });
-      } catch (error: any) {
-        console.error("Worker Error:", error.message);
-        return new Response(JSON.stringify({ error: error.message }), {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error("Worker Error:", message);
+        return new Response(JSON.stringify({ error: message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         });
