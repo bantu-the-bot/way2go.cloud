@@ -22,23 +22,31 @@ export default {
 Your task is to convert infrastructure descriptions into professional, high-fidelity Mermaid.js diagrams.
 
 - Use 'graph TD'.
-- LOGICAL GROUPING: Use 'subgraph' blocks to represent containment (e.g., VMs inside a Physical Server, Resources inside a VPC/Subnet).
+- LOGICAL GROUPING: Use 'subgraph' blocks to represent containment (e.g., VMs inside a Physical Server).
 - CLARITY: Use descriptive, quoted labels for all nodes (e.g., A["Domain Controller"]).
-- STYLING: Aim for a clean, hierarchical layout that represents the actual physical or logical architecture.
-- Output ONLY the raw mermaid code.
-- No markdown code fences, no explanations, no prefix/suffix text.`;
+- STYLING: Aim for a clean, hierarchical layout.
+- STRICT RULE: Output ONLY the raw mermaid code.
+- NO markdown markers (\`\`\`mermaid or \`\`\`).
+- NO explanations, NO introductory text, NO "Here is your code". 
+- Just the graph syntax.`;
 
         console.log("Generating diagram for prompt:", prompt);
 
-        const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt },
           ],
         });
 
-        const mermaidCode = response.response || response;
-        console.log("Generated Mermaid Code:", mermaidCode);
+        let mermaidCode = aiResponse.response || aiResponse;
+
+        // Sanitization: Strip any markdown code fences if the AI included them
+        mermaidCode = mermaidCode.replace(/```mermaid/g, '');
+        mermaidCode = mermaidCode.replace(/```/g, '');
+        mermaidCode = mermaidCode.trim();
+
+        console.log("Sanitized Mermaid Code:", mermaidCode);
 
         return new Response(JSON.stringify({ chart: mermaidCode }), {
           headers: { 'Content-Type': 'application/json' },

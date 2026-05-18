@@ -20,17 +20,19 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+html, body {
   margin: 0;
-  overflow: hidden;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Mermaid SVG Responsiveness */
@@ -38,7 +40,11 @@ body {
   max-width: 100% !important;
   height: auto !important;
   display: block;
-  margin: 0 auto;
+}
+
+.mermaid-container {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Dynamic viewport height for mobile browsers */
