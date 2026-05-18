@@ -33,10 +33,18 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Mermaid SVG Responsiveness */
+.mermaid-container svg {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Dynamic viewport height for mobile browsers */
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar-track {

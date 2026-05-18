@@ -114,9 +114,9 @@ function App() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-[#0f172a] text-slate-200">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 flex flex-col hidden md:flex">
+    <div className="flex flex-col md:flex-row min-h-screen-dvh bg-[#0f172a] text-slate-200 overflow-x-hidden">
+      {/* Sidebar - Desktop Only */}
+      <aside className="hidden md:flex w-64 border-r border-slate-800 flex-col flex-shrink-0">
         <div className="p-6 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">W</div>
@@ -145,34 +145,41 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-10">
-          <h2 className="text-sm font-medium text-slate-400">Architect Workspace / <span className="text-white">New Diagram</span></h2>
+      {/* Main Content Container */}
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto md:overflow-hidden">
+        <header className="min-h-[4rem] border-b border-slate-800 flex flex-wrap items-center justify-between px-4 md:px-8 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-20 py-2 md:py-0 gap-4">
           <div className="flex items-center gap-3">
-            <button className="px-3 py-1.5 text-xs font-medium bg-slate-800 rounded-md hover:bg-slate-700 transition-colors">Documentation</button>
-            <button className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-colors">Sign In</button>
+            {/* Mobile Logo */}
+            <div className="md:hidden w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">W</div>
+            <h2 className="text-sm font-medium text-slate-400 whitespace-nowrap">
+              <span className="hidden sm:inline text-slate-500">Architect Workspace / </span>
+              <span className="text-white">New Diagram</span>
+            </h2>
+          </div>
+          <div className="flex items-center gap-2 md:gap-3">
+            <button className="px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-medium bg-slate-800 rounded-md hover:bg-slate-700 transition-colors">Docs</button>
+            <button className="px-3 md:px-4 py-1.5 text-[10px] md:text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-colors shadow-lg">Sign In</button>
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col lg:flex-row p-6 gap-6 overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-y-auto lg:overflow-hidden">
           {/* Editor Area */}
-          <section className="flex-1 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Design Specification</h3>
+          <section className="flex-1 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Design Specification</h3>
             </div>
-            <div className="flex-1 glass rounded-xl overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[300px]">
               <textarea
-                className="flex-1 w-full bg-transparent p-6 text-slate-200 placeholder-slate-500 font-mono text-sm focus:outline-none resize-none"
-                placeholder="Describe your infrastructure... (e.g., 'A three-tier AWS architecture with ALB, EC2 Auto Scaling, and RDS Cluster')"
+                className="flex-1 w-full bg-transparent p-4 md:p-6 text-slate-200 placeholder-slate-600 font-mono text-sm focus:outline-none resize-none"
+                placeholder="Describe your infrastructure... (e.g., 'A three-tier AWS architecture with ALB, EC2 Auto Scaling, RDS Cluster')"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
               />
-              <div className="p-4 border-t border-white/5 bg-white/5 flex justify-end">
+              <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 flex justify-end">
                 <button
                   onClick={handleGenerate}
                   disabled={isLoading || !input.trim()}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all shadow-lg flex items-center gap-2"
+                  className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -184,27 +191,27 @@ function App() {
           </section>
 
           {/* Preview Area */}
-          <section className="flex-[1.5] flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Architecture Preview</h3>
-              <div className="flex gap-2">
+          <section className="flex-[1.5] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
+              <div className="flex gap-1 md:gap-2">
                 <button 
                   onClick={copyToClipboard}
-                  className="p-1.5 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-white" 
+                  className="p-2 hover:bg-slate-800 rounded-md transition-colors text-slate-400 hover:text-white bg-slate-900/50 border border-slate-800" 
                   title="Copy Mermaid Code"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                 </button>
                 <button 
                   onClick={exportSVG}
-                  className="p-1.5 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-white" 
+                  className="p-2 hover:bg-slate-800 rounded-md transition-colors text-slate-400 hover:text-white bg-slate-900/50 border border-slate-800" 
                   title="Export SVG"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 </button>
               </div>
             </div>
-            <div className="flex-1 bg-[#f8fafc] rounded-xl border border-slate-200 overflow-auto flex items-center justify-center p-8 shadow-inner flex-center">
+            <div className="flex-1 bg-[#f8fafc] rounded-xl border border-slate-300 overflow-auto flex items-start justify-center p-4 md:p-8 shadow-inner mermaid-container">
               <Mermaid chart={chart} />
             </div>
           </section>
