@@ -33,7 +33,7 @@ Convert the following software infrastructure description into a valid Mermaid.j
     });
 
     // Workers AI returns an object with a 'response' string for text generation
-    const mermaidCode = response.response || response;
+    const mermaidCode = response.response || (typeof response === 'string' ? response : '');
 
     return new Response(JSON.stringify({ chart: mermaidCode }), {
       headers: { 'Content-Type': 'application/json' },

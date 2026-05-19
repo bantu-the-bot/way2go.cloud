@@ -41,7 +41,11 @@ Your task is to convert infrastructure descriptions into professional, high-fide
           ],
         });
 
-        let mermaidCode = aiResponse.response || aiResponse;
+        let mermaidCode = aiResponse.response || '';
+        
+        if (!mermaidCode && typeof aiResponse === 'string') {
+          mermaidCode = aiResponse;
+        }
 
         // Robust Sanitization:
         // 1. Strip markdown code fences (```mermaid or ```)
