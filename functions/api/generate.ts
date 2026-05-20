@@ -45,7 +45,22 @@ Convert the following software infrastructure description into a valid Mermaid.j
     });
 
     // Workers AI returns an object with a 'response' string for text generation
-    const mermaidCode = response.response || (typeof response === 'string' ? response : '');
+    let mermaidCode = response.response || (typeof response === 'string' ? response : '');
+
+    // Robust Sanitization:
+    // 1. Strip markdown code fences (```mermaid or ```)
+    mermaidCode = mermaidCode.replace(/```mermaid\n?/g, '');
+    mermaidCode = mermaidCode.replace(/```\n?/g, '');
+    
+    // 2. Remove common AI "chatter" if it appears at the start or end
+    // Look for the actual start of the graph
+    const graphStartIndex = mermaidCode.indexOf('graph ');
+    if (graphStartIndex !== -1) {
+      mermaidCode = mermaidCode.substring(graphStartIndex);
+    }
+    
+    // 3. Trim any trailing text
+    mermaidCode = mermaidCode.trim();
 
     return new Response(JSON.stringify({ chart: mermaidCode }), {
       headers: { 'Content-Type': 'application/json' },
