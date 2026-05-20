@@ -121,6 +121,16 @@ function App() {
     }
   }
 
+  const resetWorkspace = useCallback(() => {
+    if (confirm('Are you sure you want to clear the current diagram and history?')) {
+      setChart('')
+      setMessages([
+        { role: 'assistant', content: 'Workspace cleared. Describe your new architecture to begin.' }
+      ])
+      setInput('')
+    }
+  }, [])
+
   const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(chart)
     alert('Mermaid code copied to clipboard')
@@ -179,7 +189,12 @@ function App() {
             <div className="md:hidden w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">W</div>
             <h2 className="text-sm font-medium text-slate-400 whitespace-nowrap">
               <span className="hidden sm:inline text-slate-500">Architect Workspace / </span>
-              <span className="text-white">New Diagram</span>
+              <button 
+                onClick={resetWorkspace}
+                className="text-white hover:text-blue-400 transition-colors cursor-pointer"
+              >
+                New Diagram
+              </button>
             </h2>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
@@ -193,6 +208,13 @@ function App() {
           <section className="flex-1 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Design Specification</h3>
+              <button 
+                onClick={resetWorkspace}
+                className="text-[10px] font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider flex items-center gap-1.5 transition-colors group"
+              >
+                <svg className="w-3 h-3 group-hover:rotate-[-45deg] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Clear Canvas
+              </button>
             </div>
             <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[400px]">
               {/* Message History */}
