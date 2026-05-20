@@ -39,6 +39,17 @@ function App() {
   const [input, setInput] = useState('')
   const [chart, setChart] = useState('graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]')
   const [isLoading, setIsLoading] = useState(false)
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+    { role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }
+  ])
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
+
   const [examples] = useState([
     {
       id: 1,
@@ -64,19 +75,31 @@ function App() {
   ])
 
   const loadExample = (example: typeof examples[0]) => {
-    setInput(example.inputText)
+    setInput('')
     setChart(example.chartState)
+    setMessages([
+      { role: 'assistant', content: `Loaded example: **${example.title}**` },
+      { role: 'user', content: example.inputText }
+    ])
   }
 
   const handleGenerate = async () => {
-    if (!input.trim()) return
+    const instruction = input.trim()
+    if (!instruction) return
+    
     setIsLoading(true)
+    const newMessages = [...messages, { role: 'user' as const, content: instruction }]
+    setMessages(newMessages)
+    setInput('')
     
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input }),
+        body: JSON.stringify({ 
+          current_code: chart, 
+          instruction 
+        }),
       })
 
       if (!response.ok) {
@@ -87,11 +110,12 @@ function App() {
       const data = await response.json()
       if (data.chart) {
         setChart(data.chart)
+        setMessages([...newMessages, { role: 'assistant', content: 'Diagram updated successfully.' }])
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Generation error:', error)
-      alert(`Architecture Synthesis Failed: ${message}`);
+      setMessages([...newMessages, { role: 'assistant', content: `Error: ${message}` }])
     } finally {
       setIsLoading(false)
     }
@@ -170,24 +194,65 @@ function App() {
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Design Specification</h3>
             </div>
-            <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[300px]">
-              <textarea
-                className="flex-1 w-full bg-transparent p-4 md:p-6 text-slate-200 placeholder-slate-600 font-mono text-sm focus:outline-none resize-none"
-                placeholder="Describe your infrastructure... (e.g., 'A three-tier AWS architecture with ALB, EC2 Auto Scaling, RDS Cluster')"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-              <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 flex justify-end">
-                <button
-                  onClick={handleGenerate}
-                  disabled={isLoading || !input.trim()}
-                  className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95"
-                >
-                  {isLoading ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : null}
-                  {isLoading ? 'Synthesizing...' : 'Generate Architecture'}
-                </button>
+            <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[400px]">
+              {/* Message History */}
+              <div 
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth"
+              >
+                {messages.map((msg, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                      msg.role === 'user' 
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'
+                    }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-sm border border-slate-700 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 space-y-3">
+                <div className="relative">
+                  <textarea
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-12 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px]"
+                    placeholder="Describe changes... (e.g., 'Add a Redis cache', 'Switch to 3 subnets')"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleGenerate()
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isLoading || !input.trim()}
+                    className="absolute bottom-3 right-3 p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-md transition-all active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 px-1 text-center">
+                  Press Enter to send, Shift + Enter for new line.
+                </p>
               </div>
             </div>
           </section>

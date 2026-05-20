@@ -8,16 +8,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   try {
-    const { prompt } = await request.json() as { prompt: string };
+    const { current_code, instruction } = await request.json() as { current_code?: string; instruction: string };
 
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: 'No prompt provided' }), {
+    if (!instruction) {
+      return new Response(JSON.stringify({ error: 'No instruction provided' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const systemPrompt = `You are a cloud architect and Mermaid.js expert. 
+    const systemPrompt = current_code 
+      ? `You are an expert systems architect and Mermaid.js syntax master. 
+You will receive the CURRENT Mermaid code of an architecture diagram and a MODIFICATION REQUEST. 
+Perform a surgical update to the code to satisfy the request. 
+Maintain the existing structure where possible.
+Return ONLY the raw, updated Mermaid code block. 
+Do NOT include markdown code fences (like \`\`\`mermaid).
+Do NOT include any explanations or extra text.`
+      : `You are a cloud architect and Mermaid.js expert. 
 Convert the following software infrastructure description into a valid Mermaid.js flowchart.
 - Use 'graph TD' or 'graph LR'.
 - Use descriptive node names.
@@ -25,10 +33,14 @@ Convert the following software infrastructure description into a valid Mermaid.j
 - Do NOT include markdown code fences (like \`\`\`mermaid).
 - Do NOT include any explanations or extra text.`;
 
+    const userPrompt = current_code 
+      ? `CURRENT CODE:\n${current_code}\n\nMODIFICATION REQUEST:\n${instruction}`
+      : instruction;
+
     const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
+        { role: 'user', content: userPrompt },
       ],
     });
 
