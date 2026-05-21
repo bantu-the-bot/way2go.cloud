@@ -47,6 +47,20 @@ html, body {
   max-width: 100% !important;
 }
 
+/* Force dark text for Mermaid labels inside the white canvas */
+.mermaid-container svg text,
+.mermaid-container .node label,
+.mermaid-container .edgeLabel,
+.mermaid-container .cluster-label {
+  fill: #0f172a !important;
+  color: #0f172a !important;
+}
+
+/* Prevent foreignObject clipping (subgraph/node labels) */
+.mermaid-container foreignObject {
+  overflow: visible !important;
+}
+
 /* Dynamic viewport height for mobile browsers */
 .min-h-screen-dvh {
   min-height: 100vh;

@@ -215,9 +215,31 @@ function App() {
     const svgElement = document.querySelector('.mermaid-container svg') as SVGElement;
     if (svgElement) {
       try {
+        // Clone the SVG to avoid modifying the UI
+        const clonedSvg = svgElement.cloneNode(true) as SVGElement;
+        
+        // Find Mermaid styles in the head and inject them into the cloned SVG
+        // Mermaid typically adds styles with IDs starting with "mermaid-"
+        const styleTags = document.querySelectorAll('style[id^="mermaid-"]');
+        let combinedStyles = '';
+        styleTags.forEach(tag => {
+          combinedStyles += tag.innerHTML;
+        });
+
+        // Add additional contrast safeguards for the standalone file
+        combinedStyles += `
+          svg { background-color: white; }
+          text, .node label, .edgeLabel, .cluster-label { fill: #0f172a !important; color: #0f172a !important; }
+          foreignObject { overflow: visible !important; }
+        `;
+
+        const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        style.innerHTML = combinedStyles;
+        clonedSvg.insertBefore(style, clonedSvg.firstChild);
+
         // Use standard browser serialization pipeline
         const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(svgElement);
+        const svgString = serializer.serializeToString(clonedSvg);
         const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -406,7 +428,7 @@ function App() {
           </section>
 
           {/* Preview Area */}
-          <section className="flex-[1.5] min-w-0 lg:min-w-[600px] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full transition-all duration-300">
+          <section className="flex-[1.5] min-w-0 lg:min-w-[750px] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full transition-all duration-300">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
               <div className="flex gap-1 md:gap-2 relative z-30">
