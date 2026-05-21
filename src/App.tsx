@@ -96,8 +96,43 @@ function App() {
     }
     return [{ role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }];
   })
+  
+  // Resizable layout state
+  const [leftWidth, setLeftWidth] = useState(40) // percentage
+  const [isDragging, setIsDragging] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return
+    const newWidth = (e.clientX / window.innerWidth) * 100
+    if (newWidth > 20 && newWidth < 80) {
+      setLeftWidth(newWidth)
+    }
+  }, [isDragging])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
 
   // Debounce manual or AI edits to the rendered chart
   useEffect(() => {
@@ -312,9 +347,12 @@ function App() {
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-y-auto lg:overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* Control Panel (Tabbed Sidebar) */}
-          <section className="flex-1 min-w-0 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
+          <section 
+            style={{ width: `calc(${leftWidth}% - 4px)` }}
+            className="flex flex-col gap-3 md:gap-4 flex-shrink-0 p-4 md:p-6 transition-none"
+          >
             <div className="flex items-center justify-between px-1">
               <div className="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
                 <button
@@ -347,7 +385,7 @@ function App() {
               </button>
             </div>
             
-            <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[400px]">
+            <div className="flex-1 glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-0">
               {activeTab === 'ai' ? (
                 <>
                   {/* Message History */}
@@ -427,8 +465,19 @@ function App() {
             </div>
           </section>
 
+          {/* Draggable Divider */}
+          <div 
+            onMouseDown={handleMouseDown}
+            className={`hidden lg:flex w-2 hover:w-2 items-center justify-center cursor-col-resize group transition-all relative z-40 ${isDragging ? 'bg-blue-600/50 w-2' : 'hover:bg-blue-500/20'}`}
+          >
+            <div className={`w-0.5 h-8 rounded-full transition-all ${isDragging ? 'bg-white h-12' : 'bg-slate-700 group-hover:bg-blue-400'}`} />
+          </div>
+
           {/* Preview Area */}
-          <section className="flex-[1.5] min-w-0 lg:min-w-[750px] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full transition-all duration-300">
+          <section 
+            style={{ width: `calc(${100 - leftWidth}% - 4px)` }}
+            className="flex flex-col gap-3 md:gap-4 flex-grow p-4 md:p-6 min-h-0"
+          >
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
               <div className="flex gap-1 md:gap-2 relative z-30">
@@ -471,7 +520,7 @@ function App() {
                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
                     <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-0.5">Syntax Error Detected</div>
                     <div className="text-xs text-red-200/70 font-medium truncate">{renderError}</div>
                   </div>
