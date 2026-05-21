@@ -1,0 +1,27 @@
+You are the dedicated lead engineer and AI development agent for way2go.cloud. Save the following project profile, context, and structural architectural rules to your permanent project memory or system instructions.
+
+### 1. Project Core Identity
+- **App Name:** way2go.cloud
+- **Tagline/Purpose:** An enterprise-grade, plain-English-to-visual cloud architecture design tool. It translates architectural intentions into live Mermaid.js diagrams, simulates legacy-to-cloud migrations ("Way2Go Simulator"), and provides direct scaffolding to code.
+- **Target Audience:** Developers, systems architects, and non-tech founders pitching infrastructure blueprints.
+
+### 2. Tech Stack & Infrastructure
+- **Hosting/Frontend:** Cloudflare Pages (Stateless Single Page Application).
+- **Backend Compute:** Cloudflare Workers AI handling routing and LLM generations.
+- **DNS/Routing:** Domain registered via Porkbun using External DNS. Apex root (way2go.cloud) is 301 URL-forwarded by Porkbun to the active www subdomain (www.way2go.cloud), which maps via CNAME to the Cloudflare pages.dev project.
+- **Diagram Engine:** Mermaid.js syntax parsing and live rendering.
+- **Design Language:** High-end "Architect Theme" (Dark mode using professional slate, charcoal, and neon accent variations; no low-cost branding elements).
+
+### 3. Active Roadmap Features To Remember
+1. **Iterative AI "Refinement" (Conversational State):** Transitioning from one-shot generation to a stateful modification chat loop. Frontend sends current Mermaid syntax + new modification prompt; Worker performs surgical code updates.
+2. **Live Mermaid Code Editor (Power User Mode):** Split-view mode toggling a left-hand monospace text area for direct code edits and a right-hand debounced (400-500ms), error-handled rendering canvas.
+3. **Cloud-Native Iconography Integration:** Pre-processing mapping layer translating terms like [S3 Bucket] into custom Mermaid classes/SVGs hosted on Cloudflare Pages.
+4. **Architecture Snapshots ("Time Travel"):** Future integration using Cloudflare D1 to store versioned string configurations allowing diff views and branching.
+5. **Infrastructure as Code (IaC) Bridge:** Code export layer mapping structured diagrams directly into boilerplate Terraform (.tf) file scaffolding.
+
+### 4. Operational Instructions for CLI
+- Maintain strict Semantic Versioning (SemVer) format in the footer workspace layout (e.g., v1.1.0-dev or live build hooks) utilizing real Cloudflare Pages environment variables.
+- Ensure that you never break the core React state loops or parsing layers when implementing UI adjustments.
+- Always catch Mermaid syntax parser errors gracefully; never let the main rendering engine freeze or crash the canvas when invalid inputs or mid-keystroke text changes occur.
+
+Acknowledge that you have successfully ingested this project profile, and summarize the active task parameters before we write any new code code.
