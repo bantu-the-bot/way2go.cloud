@@ -40,23 +40,56 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
   return <div ref={ref} className="flex justify-center w-full h-full" />
 }
 
+// URL compression utilities
+const encodeBlueprint = (code: string) => {
+  try {
+    return btoa(encodeURIComponent(code));
+  } catch {
+    return '';
+  }
+};
+
+const decodeBlueprint = (blueprint: string) => {
+  try {
+    return decodeURIComponent(atob(blueprint));
+  } catch {
+    return '';
+  }
+};
+
+const INITIAL_CHART = 'graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]';
+
 function App() {
   const [input, setInput] = useState('')
-  const [chart, setChart] = useState('graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]')
+  const [chart, setChart] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const blueprint = params.get('blueprint');
+      if (blueprint) {
+        return decodeBlueprint(blueprint) || INITIAL_CHART;
+      }
+    }
+    return INITIAL_CHART;
+  })
   const [renderedChart, setRenderedChart] = useState(chart)
   const [isLoading, setIsLoading] = useState(false)
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }
-  ])
-  const [isSplitView, setIsSplitView] = useState(false)
+  const [activeTab, setActiveTab] = useState<'ai' | 'editor'>('ai')
+  const [showShareTooltip, setShowShareTooltip] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('blueprint')) {
+      return [{ role: 'assistant', content: 'Successfully loaded diagram from shared link.' }];
+    }
+    return [{ role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }];
+  })
+
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Debounce manual or AI edits to the rendered chart
   useEffect(() => {
     const timer = setTimeout(() => {
       setRenderedChart(chart)
-    }, 450)
+    }, 300) // 300ms as requested
     return () => clearTimeout(timer)
   }, [chart])
 
@@ -90,6 +123,14 @@ function App() {
     }
   ])
 
+  const shareBlueprint = useCallback(() => {
+    const blueprint = encodeBlueprint(chart);
+    const url = `${window.location.origin}${window.location.pathname}?blueprint=${blueprint}`;
+    navigator.clipboard.writeText(url);
+    setShowShareTooltip(true);
+    setTimeout(() => setShowShareTooltip(false), 2000);
+  }, [chart]);
+
   const loadExample = (example: typeof examples[0]) => {
     setInput('')
     setChart(example.chartState)
@@ -97,6 +138,7 @@ function App() {
       { role: 'assistant', content: `Loaded example: **${example.title}**` },
       { role: 'user', content: example.inputText }
     ])
+    setActiveTab('ai')
   }
 
   const handleGenerate = async () => {
@@ -145,6 +187,7 @@ function App() {
         { role: 'assistant', content: 'Workspace cleared. Describe your new architecture to begin.' }
       ])
       setInput('')
+      setActiveTab('ai')
     }
   }, [])
 
@@ -221,98 +264,140 @@ function App() {
         </header>
 
         <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-y-auto lg:overflow-hidden">
-          {/* Editor Area */}
+          {/* Control Panel (Tabbed Sidebar) */}
           <section className="flex-1 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Design Specification</h3>
+              <div className="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
+                <button
+                  onClick={() => setActiveTab('ai')}
+                  className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                    activeTab === 'ai' 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  AI Architect
+                </button>
+                <button
+                  onClick={() => setActiveTab('editor')}
+                  className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                    activeTab === 'editor' 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  Live Code Editor
+                </button>
+              </div>
               <button 
                 onClick={resetWorkspace}
                 className="text-[10px] font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider flex items-center gap-1.5 transition-colors group"
               >
                 <svg className="w-3 h-3 group-hover:rotate-[-45deg] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Clear Canvas
+                Reset
               </button>
             </div>
+            
             <div className="flex-1 lg:h-full glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-[400px]">
-              {/* Message History */}
-              <div 
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth"
-              >
-                {messages.map((msg, idx) => (
+              {activeTab === 'ai' ? (
+                <>
+                  {/* Message History */}
                   <div 
-                    key={idx} 
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    ref={scrollRef}
+                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth bg-slate-900/20"
                   >
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                      msg.role === 'user' 
-                        ? 'bg-blue-600 text-white rounded-tr-none' 
-                        : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'
-                    }`}>
-                      {msg.content}
-                    </div>
+                    {messages.map((msg, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                          msg.role === 'user' 
+                            ? 'bg-blue-600 text-white rounded-tr-none shadow-md' 
+                            : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700 shadow-sm'
+                        }`}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-sm border border-slate-700 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-sm border border-slate-700 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
-                    </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Input Area */}
-              <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 space-y-3">
-                <div className="relative">
+                  {/* Input Area */}
+                  <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 space-y-3">
+                    <div className="relative">
+                      <textarea
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-12 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px]"
+                        placeholder="Refine your design... (e.g., 'Add a Redis cache layer')"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleGenerate()
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={handleGenerate}
+                        disabled={isLoading || !input.trim()}
+                        className="absolute bottom-3 right-3 p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-md transition-all active:scale-95 shadow-lg"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col bg-slate-950/30">
                   <textarea
-                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-12 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px]"
-                    placeholder="Describe changes... (e.g., 'Add a Redis cache', 'Switch to 3 subnets')"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleGenerate()
-                      }
-                    }}
+                    className="flex-1 w-full bg-transparent p-4 md:p-6 text-blue-400/90 font-mono text-sm focus:outline-none resize-none selection:bg-blue-500/20"
+                    spellCheck="false"
+                    value={chart}
+                    onChange={(e) => setChart(e.target.value)}
+                    placeholder="Enter Mermaid code manually..."
                   />
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isLoading || !input.trim()}
-                    className="absolute bottom-3 right-3 p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-md transition-all active:scale-95"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                  <div className="p-3 bg-slate-900/50 border-t border-slate-800/50 flex justify-between items-center px-4">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Manual Studio Mode</span>
+                    {renderError && (
+                      <span className="text-[10px] text-red-400 font-bold animate-pulse">Syntax Error Detected</span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-[10px] text-slate-500 px-1 text-center">
-                  Press Enter to send, Shift + Enter for new line.
-                </p>
-              </div>
+              )}
             </div>
           </section>
 
           {/* Preview Area */}
-          <section className={`flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full ${isSplitView ? 'flex-[3]' : 'flex-[1.5]'}`}>
+          <section className="flex-[1.5] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
               <div className="flex gap-1 md:gap-2">
-                <button 
-                  onClick={() => setIsSplitView(!isSplitView)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    isSplitView 
-                      ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
-                      : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                  title="Toggle Split View / Code Editor"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                  {isSplitView ? 'Close Editor' : 'Code Mode'}
-                </button>
+                <div className="relative">
+                  <button 
+                    onClick={shareBlueprint}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider rounded-md border border-slate-700 transition-all active:scale-95"
+                    title="Share Diagram Link"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                    Share Blueprint
+                  </button>
+                  {showShareTooltip && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg animate-in fade-in zoom-in duration-200 whitespace-nowrap z-50">
+                      Link Copied!
+                    </div>
+                  )}
+                </div>
                 <div className="w-[1px] h-4 bg-slate-800 self-center mx-1" />
                 <button 
                   onClick={copyToClipboard}
@@ -331,28 +416,26 @@ function App() {
               </div>
             </div>
 
-            <div className={`flex-1 flex overflow-hidden rounded-xl border border-slate-800 bg-[#0f172a] shadow-inner ${isSplitView ? 'flex-row' : 'flex-col'}`}>
-              {isSplitView && (
-                <div className="flex-1 border-r border-slate-800 flex flex-col relative group">
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-                    <span className="text-[10px] font-bold text-slate-600 bg-slate-900/80 px-2 py-1 rounded border border-slate-800 uppercase tracking-tighter">Live Editor</span>
+            <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0f172a] shadow-inner relative">
+              {renderError && (
+                <div className="absolute top-0 left-0 right-0 z-20 bg-red-950/80 backdrop-blur-md border-b border-red-500/30 p-3 flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   </div>
-                  <textarea
-                    className={`flex-1 w-full bg-slate-950/50 p-4 md:p-6 font-mono text-sm focus:outline-none resize-none selection:bg-blue-500/20 ${renderError ? 'text-red-400/90' : 'text-blue-400/90'}`}
-                    spellCheck="false"
-                    value={chart}
-                    onChange={(e) => setChart(e.target.value)}
-                    placeholder="Enter Mermaid code..."
-                  />
-                  {renderError && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-red-950/90 border-t border-red-500/50 p-3 flex items-center gap-2 backdrop-blur-sm transition-all animate-in slide-in-from-bottom-2">
-                      <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span className="text-[11px] font-medium text-red-200 uppercase tracking-tight">{renderError}</span>
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-0.5">Syntax Error Detected</div>
+                    <div className="text-xs text-red-200/70 font-medium truncate">{renderError}</div>
+                  </div>
+                  <button 
+                    onClick={() => setRenderError(null)}
+                    className="p-1.5 hover:bg-white/5 rounded transition-colors text-red-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
                 </div>
               )}
-              <div className={`flex-[1.2] bg-[#f8fafc] overflow-auto flex items-start justify-center p-4 md:p-8 mermaid-container relative ${isSplitView ? 'bg-white' : ''}`}>
+              
+              <div className="flex-1 bg-white overflow-auto flex items-start justify-center p-4 md:p-8 mermaid-container relative">
                 <Mermaid chart={renderedChart} onError={setRenderError} />
               </div>
             </div>
