@@ -11,6 +11,20 @@ mermaid.initialize({
 
 const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string | null) => void }) => {
   const ref = useRef<HTMLDivElement>(null)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+  // Redraw on resize to fix spacing collisions
+  useEffect(() => {
+    if (!ref.current) return
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect
+        setDimensions({ width, height })
+      }
+    })
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     if (ref.current && chart) {
@@ -35,7 +49,7 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
       ref.current.innerHTML = ''
       onError?.(null)
     }
-  }, [chart, onError])
+  }, [chart, onError, dimensions])
 
   return <div ref={ref} className="flex justify-center w-full h-full" />
 }
@@ -197,15 +211,28 @@ function App() {
   }, [chart])
 
   const exportSVG = useCallback(() => {
-    const svgContent = document.querySelector('.flex-center svg')?.outerHTML
-    if (svgContent) {
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'architecture.svg'
-      link.click()
-      URL.revokeObjectURL(url)
+    // Explicitly drill down to target the raw <svg> child element
+    const svgElement = document.querySelector('.mermaid-container svg') as SVGElement;
+    if (svgElement) {
+      try {
+        // Use standard browser serialization pipeline
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgElement);
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'architecture.svg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Export error:', err);
+        alert('Failed to export SVG.');
+      }
+    } else {
+      alert('Diagram SVG not found.');
     }
   }, [])
 
@@ -265,7 +292,7 @@ function App() {
 
         <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-y-auto lg:overflow-hidden">
           {/* Control Panel (Tabbed Sidebar) */}
-          <section className="flex-1 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
+          <section className="flex-1 min-w-0 flex flex-col gap-3 md:gap-4 flex-shrink-0 lg:flex-shrink">
             <div className="flex items-center justify-between px-1">
               <div className="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
                 <button
@@ -379,10 +406,10 @@ function App() {
           </section>
 
           {/* Preview Area */}
-          <section className="flex-[1.5] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full">
+          <section className="flex-[1.5] min-w-0 lg:min-w-[600px] flex flex-col gap-3 md:gap-4 min-h-[400px] lg:h-full transition-all duration-300">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
-              <div className="flex gap-1 md:gap-2">
+              <div className="flex gap-1 md:gap-2 relative z-30">
                 <div className="relative">
                   <button 
                     onClick={shareBlueprint}
@@ -393,7 +420,7 @@ function App() {
                     Share Blueprint
                   </button>
                   {showShareTooltip && (
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg animate-in fade-in zoom-in duration-200 whitespace-nowrap z-50">
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg animate-in fade-in zoom-in duration-200 whitespace-nowrap z-[100]">
                       Link Copied!
                     </div>
                   )}
@@ -416,7 +443,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0f172a] shadow-inner relative">
+            <div className="flex-1 flex flex-col rounded-xl border border-slate-800 bg-[#0f172a] shadow-inner relative overflow-visible">
               {renderError && (
                 <div className="absolute top-0 left-0 right-0 z-20 bg-red-950/80 backdrop-blur-md border-b border-red-500/30 p-3 flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
