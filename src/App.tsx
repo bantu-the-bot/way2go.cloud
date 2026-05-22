@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import mermaid from 'mermaid'
 import { getVersionString } from './versionConfig'
+import { ThemeToggle } from './ThemeToggle'
 
 mermaid.initialize({
   startOnLoad: true,
@@ -304,53 +305,55 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen-dvh bg-[#0f172a] text-slate-200 overflow-x-hidden">
       {/* Sidebar - Desktop Only */}
-      <aside className="hidden md:flex w-64 border-r border-slate-800 flex-col flex-shrink-0">
-        <div className="p-6 border-b border-slate-800">
+      <aside className="hidden md:flex w-64 border-r border-slate-200 dark:border-slate-800 flex-col flex-shrink-0 bg-white dark:bg-[#0f172a] transition-colors duration-200">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">W</div>
             <span className="font-bold text-lg tracking-tight">way2go.cloud</span>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Examples</h3>
+          <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 px-2">Examples</h3>
           <nav className="space-y-1">
             {examples.map((item) => (
               <button
                 key={item.id}
                 onClick={() => loadExample(item)}
-                className="w-full text-left px-3 py-3 rounded-md text-sm hover:bg-slate-800 transition-colors group"
+                className="w-full text-left px-3 py-3 rounded-md text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
               >
-                <div className="font-medium text-slate-200 mb-1 leading-snug">{item.title}</div>
-                <span className="inline-block px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tight group-hover:bg-slate-700 group-hover:text-slate-400">
+                <div className="font-medium text-slate-700 dark:text-slate-200 mb-1 leading-snug">{item.title}</div>
+                <span className="inline-block px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-tight group-hover:bg-slate-300 dark:group-hover:bg-slate-700">
                   {item.category}
                 </span>
               </button>
             ))}
           </nav>
         </div>
-        <div className="p-4 border-t border-slate-800">
-          <div className="text-xs text-slate-500 px-2 font-mono">{getVersionString()} Enterprise Edition</div>
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="text-xs text-slate-400 dark:text-slate-500 px-2 font-mono">{getVersionString()} Enterprise Edition</div>
         </div>
       </aside>
 
       {/* Main Content Container */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto md:overflow-hidden">
-        <header className="min-h-[4rem] border-b border-slate-800 flex flex-wrap items-center justify-between px-4 md:px-8 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-20 py-2 md:py-0 gap-4">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto md:overflow-hidden bg-slate-50 dark:bg-[#0f172a] transition-colors duration-200">
+        <header className="min-h-[4rem] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-20 py-2 md:py-0 gap-4 transition-colors duration-200">
           <div className="flex items-center gap-3">
             {/* Mobile Logo */}
             <div className="md:hidden w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">W</div>
-            <h2 className="text-sm font-medium text-slate-400 whitespace-nowrap">
-              <span className="hidden sm:inline text-slate-500">Architect Workspace / </span>
+            <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              <span className="hidden sm:inline">Architect Workspace / </span>
               <button 
                 onClick={resetWorkspace}
-                className="text-white hover:text-blue-400 transition-colors cursor-pointer"
+                className="text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
                 New Diagram
               </button>
             </h2>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
-            <button className="px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-medium bg-slate-800 rounded-md hover:bg-slate-700 transition-colors">Docs</button>
+            <ThemeToggle />
+            <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-800 mx-1 md:mx-2" />
+            <button className="px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Docs</button>
             <button className="px-3 md:px-4 py-1.5 text-[10px] md:text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-colors shadow-lg">Sign In</button>
           </div>
         </header>
@@ -362,13 +365,13 @@ function App() {
             className="flex flex-col gap-3 md:gap-4 flex-shrink-0 p-4 md:p-6 transition-none"
           >
             <div className="flex items-center justify-between px-1">
-              <div className="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
+              <div className="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-lg border border-slate-300/50 dark:border-slate-700/50 transition-colors duration-200">
                 <button
                   onClick={() => setActiveTab('ai')}
                   className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                     activeTab === 'ai' 
                       ? 'bg-blue-600 text-white shadow-lg' 
-                      : 'text-slate-500 hover:text-slate-300'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   AI Architect
@@ -378,7 +381,7 @@ function App() {
                   className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                     activeTab === 'editor' 
                       ? 'bg-blue-600 text-white shadow-lg' 
-                      : 'text-slate-500 hover:text-slate-300'
+                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   Live Code Editor
@@ -386,23 +389,23 @@ function App() {
               </div>
               <button 
                 onClick={resetWorkspace}
-                className="text-[10px] font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider flex items-center gap-1.5 transition-colors group"
+                className="text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-wider flex items-center gap-1.5 transition-colors group"
               >
                 <svg className="w-3 h-3 group-hover:rotate-[-45deg] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 Reset
               </button>
             </div>
             
-            <div className="flex-1 glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-0">
+            <div className="flex-1 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl dark:shadow-2xl min-h-0 transition-colors duration-200">
               {activeTab === 'ai' ? (
                 <>
-                  <div className="bg-slate-800/30 border-b border-slate-700/30 px-4 py-2 flex items-center justify-between">
+                  <div className="bg-slate-100 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-700/30 px-4 py-2 flex items-center justify-between transition-colors duration-200">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Architect Assistant</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Architecture Mode</span>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Architecture Mode</span>
                       <button 
                         onClick={() => setMode(mode === 'default' ? 'architecture' : 'default')}
-                        className={`w-8 h-4 rounded-full relative transition-colors duration-200 ${mode === 'architecture' ? 'bg-blue-600' : 'bg-slate-700'}`}
+                        className={`w-8 h-4 rounded-full relative transition-colors duration-200 ${mode === 'architecture' ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
                       >
                         <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-200 ${mode === 'architecture' ? 'left-4.5' : 'left-0.5'}`} />
                       </button>
@@ -411,7 +414,7 @@ function App() {
                   {/* Message History */}
                   <div 
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth bg-slate-900/20"
+                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth bg-slate-50 dark:bg-slate-900/20 transition-colors duration-200"
                   >
                     {messages.map((msg, idx) => (
                       <div 
@@ -421,7 +424,7 @@ function App() {
                         <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                           msg.role === 'user' 
                             ? 'bg-blue-600 text-white rounded-tr-none shadow-md' 
-                            : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700 shadow-sm'
+                            : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-200'
                         }`}>
                           {msg.content}
                         </div>
@@ -429,20 +432,20 @@ function App() {
                     ))}
                     {isLoading && (
                       <div className="flex justify-start">
-                        <div className="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-sm border border-slate-700 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                          <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
+                        <div className="bg-white dark:bg-slate-800 text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 flex items-center gap-2 transition-colors duration-200">
+                          <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-slate-500 rounded-full animate-bounce" />
                         </div>
                       </div>
                     )}
                   </div>
 
                   {/* Input Area */}
-                  <div className="p-3 md:p-4 border-t border-white/5 bg-white/5 space-y-3">
+                  <div className="p-3 md:p-4 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 space-y-3 transition-colors duration-200">
                     <div className="relative">
                       <textarea
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-12 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px]"
+                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 pr-12 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px] transition-colors duration-200"
                         placeholder="Refine your design... (e.g., 'Add a Redis cache layer')"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -466,18 +469,18 @@ function App() {
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex flex-col bg-slate-950/30">
+                <div className="flex-1 flex flex-col bg-white dark:bg-slate-950/30 transition-colors duration-200">
                   <textarea
-                    className="flex-1 w-full bg-transparent p-4 md:p-6 text-blue-400/90 font-mono text-sm focus:outline-none resize-none selection:bg-blue-500/20"
+                    className="flex-1 w-full bg-transparent p-4 md:p-6 text-blue-600 dark:text-blue-400/90 font-mono text-sm focus:outline-none resize-none selection:bg-blue-500/20 transition-colors duration-200"
                     spellCheck="false"
                     value={chart}
                     onChange={(e) => setChart(e.target.value)}
                     placeholder="Enter Mermaid code manually..."
                   />
-                  <div className="p-3 bg-slate-900/50 border-t border-slate-800/50 flex justify-between items-center px-4">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800/50 flex justify-between items-center px-4 transition-colors duration-200">
                     <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Manual Studio Mode</span>
                     {renderError && (
-                      <span className="text-[10px] text-red-400 font-bold animate-pulse">Syntax Error Detected</span>
+                      <span className="text-[10px] text-red-500 dark:text-red-400 font-bold animate-pulse">Syntax Error Detected</span>
                     )}
                   </div>
                 </div>
@@ -488,9 +491,9 @@ function App() {
           {/* Draggable Divider */}
           <div 
             onMouseDown={handleMouseDown}
-            className={`hidden lg:flex w-2 hover:w-2 items-center justify-center cursor-col-resize group transition-all relative z-40 ${isDragging ? 'bg-blue-600/50 w-2' : 'hover:bg-blue-500/20'}`}
+            className={`hidden lg:flex w-2 hover:w-2 items-center justify-center cursor-col-resize group transition-all relative z-40 ${isDragging ? 'bg-blue-600/50 w-2' : 'hover:bg-blue-500/10 dark:hover:bg-blue-500/20'}`}
           >
-            <div className={`w-0.5 h-8 rounded-full transition-all ${isDragging ? 'bg-white h-12' : 'bg-slate-700 group-hover:bg-blue-400'}`} />
+            <div className={`w-0.5 h-8 rounded-full transition-all ${isDragging ? 'bg-white h-12' : 'bg-slate-300 dark:bg-slate-700 group-hover:bg-blue-600 dark:group-hover:bg-blue-400'}`} />
           </div>
 
           {/* Preview Area */}
@@ -499,12 +502,12 @@ function App() {
             className="flex flex-col gap-3 md:gap-4 flex-grow p-4 md:p-6 min-h-0"
           >
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Architecture Preview</h3>
+              <h3 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Architecture Preview</h3>
               <div className="flex gap-1 md:gap-2 relative z-30">
                 <div className="relative">
                   <button 
                     onClick={shareBlueprint}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider rounded-md border border-slate-700 transition-all active:scale-95"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 text-[10px] font-bold uppercase tracking-wider rounded-md border border-slate-200 dark:border-slate-700 transition-all active:scale-95"
                     title="Share Diagram Link"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
@@ -516,17 +519,17 @@ function App() {
                     </div>
                   )}
                 </div>
-                <div className="w-[1px] h-4 bg-slate-800 self-center mx-1" />
+                <div className="w-[1px] h-4 bg-slate-200 dark:bg-slate-800 self-center mx-1" />
                 <button 
                   onClick={copyToClipboard}
-                  className="p-2 hover:bg-slate-800 rounded-md transition-colors text-slate-400 hover:text-white bg-slate-900/50 border border-slate-800" 
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800" 
                   title="Copy Mermaid Code"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                 </button>
                 <button 
                   onClick={exportSVG}
-                  className="p-2 hover:bg-slate-800 rounded-md transition-colors text-slate-400 hover:text-white bg-slate-900/50 border border-slate-800" 
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800" 
                   title="Export SVG"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -534,26 +537,26 @@ function App() {
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col rounded-xl border border-slate-800 bg-[#0f172a] shadow-inner relative overflow-visible">
+            <div className="flex-1 flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-inner relative overflow-visible transition-colors duration-200">
               {renderError && (
-                <div className="absolute top-0 left-0 right-0 z-20 bg-red-950/80 backdrop-blur-md border-b border-red-500/30 p-3 flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div className="absolute top-0 left-0 right-0 z-20 bg-red-50/90 dark:bg-red-950/80 backdrop-blur-md border-b border-red-200 dark:border-red-500/30 p-3 flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
+                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-red-600 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-0.5">Syntax Error Detected</div>
-                    <div className="text-xs text-red-200/70 font-medium truncate">{renderError}</div>
+                    <div className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-widest mb-0.5">Syntax Error Detected</div>
+                    <div className="text-xs text-red-700 dark:text-red-200/70 font-medium truncate">{renderError}</div>
                   </div>
                   <button 
                     onClick={() => setRenderError(null)}
-                    className="p-1.5 hover:bg-white/5 rounded transition-colors text-red-400"
+                    className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded transition-colors text-red-600 dark:text-red-400"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
               )}
               
-              <div className="flex-1 bg-white overflow-auto flex items-start justify-center p-4 md:p-8 mermaid-container relative">
+              <div className="flex-1 bg-white dark:bg-white overflow-auto flex items-start justify-center p-4 md:p-8 mermaid-container relative">
                 <Mermaid chart={renderedChart} onError={setRenderError} />
               </div>
             </div>
