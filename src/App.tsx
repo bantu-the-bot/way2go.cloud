@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import mermaid from 'mermaid'
+import pako from 'pako'
 import { getVersionString } from './versionConfig'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -55,47 +56,69 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
   return <div ref={ref} className="flex justify-center w-full h-full" />
 }
 
-// URL compression utilities
-const encodeBlueprint = (code: string) => {
-  try {
-    return btoa(encodeURIComponent(code));
-  } catch {
-    return '';
-  }
-};
+interface AppState {
+  input: string
+  chart: string
+  messages: { role: 'user' | 'assistant'; content: string }[]
+  mode: 'default' | 'architecture'
+}
 
-const decodeBlueprint = (blueprint: string) => {
+const compressState = (state: AppState) => {
   try {
-    return decodeURIComponent(atob(blueprint));
+    const json = JSON.stringify(state)
+    const compressed = pako.deflate(json)
+    // URL-safe Base64
+    return btoa(String.fromCharCode(...compressed))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
   } catch {
-    return '';
+    return ''
   }
-};
+}
+
+const decompressState = (str: string): AppState | null => {
+  try {
+    // Restore Base64
+    const base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const inflated = pako.inflate(bytes, { to: 'string' })
+    return JSON.parse(inflated)
+  } catch {
+    return null
+  }
+}
 
 const INITIAL_CHART = 'graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]';
 
+// Try to hydrate initial state from URL
+const getInitialState = () => {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const stateStr = params.get('state');
+  if (stateStr) {
+    return decompressState(stateStr);
+  }
+  return null;
+};
+
+const urlState = getInitialState();
+
 function App() {
-  const [input, setInput] = useState('')
-  const [chart, setChart] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const blueprint = params.get('blueprint');
-      if (blueprint) {
-        return decodeBlueprint(blueprint) || INITIAL_CHART;
-      }
-    }
-    return INITIAL_CHART;
-  })
+  const [input, setInput] = useState(urlState?.input || '')
+  const [chart, setChart] = useState(urlState?.chart || INITIAL_CHART)
   const [renderedChart, setRenderedChart] = useState(chart)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'ai' | 'editor'>('ai')
-  const [mode, setMode] = useState<'default' | 'architecture'>('default')
+  const [mode, setMode] = useState<'default' | 'architecture'>(urlState?.mode || 'default')
   const [showShareTooltip, setShowShareTooltip] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('blueprint')) {
-      return [{ role: 'assistant', content: 'Successfully loaded diagram from shared link.' }];
-    }
+    if (urlState?.messages) return urlState.messages;
     return [{ role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }];
   })
   
@@ -175,12 +198,22 @@ function App() {
   ])
 
   const shareBlueprint = useCallback(() => {
-    const blueprint = encodeBlueprint(chart);
-    const url = `${window.location.origin}${window.location.pathname}?blueprint=${blueprint}`;
+    const appState: AppState = {
+      input,
+      chart,
+      messages,
+      mode
+    };
+    const stateStr = compressState(appState);
+    const url = `${window.location.origin}${window.location.pathname}?state=${stateStr}`;
+    
+    // Update URL without refreshing to reflect the shared state
+    window.history.replaceState({}, '', url);
+    
     navigator.clipboard.writeText(url);
     setShowShareTooltip(true);
     setTimeout(() => setShowShareTooltip(false), 2000);
-  }, [chart]);
+  }, [input, chart, messages, mode]);
 
   const loadExample = (example: typeof examples[0]) => {
     setInput('')
