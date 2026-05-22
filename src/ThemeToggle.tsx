@@ -8,11 +8,11 @@ export function ThemeToggle() {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark'
     }
-    return 'dark' // Default to dark for our "Dark Architecture" vibe
+    return 'light' // Default to light if system is in light mode and no preference is saved
   })
 
   useEffect(() => {
-    const root = document.documentElement
+    const root = window.document.documentElement
     if (theme === 'dark') {
       root.classList.add('dark')
     } else {

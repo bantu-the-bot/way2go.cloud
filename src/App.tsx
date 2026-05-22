@@ -336,7 +336,7 @@ function App() {
   }, [])
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen-dvh bg-[#0f172a] text-slate-200 overflow-x-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen-dvh bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 overflow-x-hidden transition-colors duration-200">
       {/* Sidebar - Desktop Only */}
       <aside className="hidden md:flex w-64 border-r border-slate-200 dark:border-slate-800 flex-col flex-shrink-0 bg-white dark:bg-[#0f172a] transition-colors duration-200">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
