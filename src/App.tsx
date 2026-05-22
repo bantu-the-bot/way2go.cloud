@@ -11,6 +11,15 @@ mermaid.initialize({
   fontFamily: 'var(--sans)',
 })
 
+const sanitizeMermaid = (code: string): string => {
+  if (!code) return '';
+  return code
+    .split('\n')
+    .map(line => line.trimEnd().replace(/;$/, '')) // Remove trailing semicolons
+    .join('\n')
+    .replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|'); // Fix malformed edge labels -->|label|>
+};
+
 const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string | null) => void }) => {
   const ref = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -33,9 +42,10 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
       const renderDiagram = async () => {
         try {
           ref.current?.removeAttribute('data-processed')
+          const sanitizedChart = sanitizeMermaid(chart);
           const { svg } = await mermaid.render(
             'mermaid-svg-' + Math.random().toString(36).substring(2, 11),
-            chart
+            sanitizedChart
           )
           if (ref.current) {
             ref.current.innerHTML = svg

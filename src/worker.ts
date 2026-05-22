@@ -5,9 +5,12 @@ CRITICAL RULES:
 2. Use 'flowchart TD' for the layout.
 3. Group logical boundaries using 'subgraph'.
 4. Ensure all node IDs are strictly alphanumeric and contain no special characters or spaces.
-5. Wrap ALL node labels in double quotes (e.g., NodeID["Label Text"]).
-6. MANDATORY: DO NOT use double quotes INSIDE a label. If you need to emphasize something, use single quotes (e.g., NodeID["'Port Channel' Solution"]). Nested double quotes will break the parser.
-7. Avoid using reserved words like 'end', 'graph', or 'subgraph' as node IDs or unquoted labels.`;
+5. Node IDs MUST be unique. A node cannot have the same ID as a subgraph.
+6. Wrap ALL node labels in double quotes (e.g., NodeID["Label Text"]).
+7. MANDATORY: DO NOT use double quotes INSIDE a label. If you need to emphasize something, use single quotes (e.g., NodeID["'Port Channel' Solution"]). Nested double quotes will break the parser.
+8. Edge labels must be formatted as NodeA -->|Label| NodeB. NEVER add a trailing '>' inside the label pipes.
+9. Avoid using reserved words like 'end', 'graph', or 'subgraph' as node IDs or unquoted labels.
+10. Do NOT use semicolons at the end of Mermaid syntax lines.`;
 
 const DEFAULT_SYSTEM_PROMPT = `You are an elite cloud architect and Mermaid.js specialist.
 Your task is to convert infrastructure descriptions into professional, high-fidelity Mermaid.js diagrams.
@@ -16,6 +19,8 @@ Your task is to convert infrastructure descriptions into professional, high-fide
 - LOGICAL GROUPING: Use 'subgraph' blocks to represent containment (e.g., VMs inside a Physical Server).
 - CLARITY: Use descriptive labels wrapped in double quotes for all nodes (e.g., A["Domain Controller"]).
 - MANDATORY: DO NOT use double quotes INSIDE a label. Use single quotes instead.
+- Node IDs MUST be unique and must not conflict with subgraph IDs.
+- Edge labels must be formatted as NodeA -->|Label| NodeB.
 - STYLING: Aim for a clean, hierarchical layout.
 - STRICT RULE: Output ONLY the raw mermaid code.
 - NO markdown markers (\`\`\`mermaid or \`\`\`).
@@ -27,6 +32,8 @@ You will receive the CURRENT Mermaid code of an architecture diagram and a MODIF
 Perform a surgical update to the code to satisfy the request. 
 Maintain the existing structure where possible and wrap ALL labels in double quotes.
 MANDATORY: DO NOT use double quotes INSIDE a label. Use single quotes instead.
+Node IDs MUST be unique and must not conflict with subgraph IDs.
+Edge labels must be formatted as NodeA -->|Label| NodeB. NEVER add a trailing '>' after the second pipe.
 Return ONLY the raw, updated Mermaid code block. 
 Do NOT include markdown code fences (like \`\`\`mermaid).
 Do NOT include any explanations or extra text.`;
@@ -108,6 +115,13 @@ export default {
         
         // 3. Trim any trailing text
         mermaidCode = mermaidCode.trim();
+
+        // 4. Post-processing fixes for common AI syntax slips:
+        // Remove trailing semicolons from lines (Mermaid doesn't need them and they can break some versions)
+        mermaidCode = mermaidCode.split('\n').map(line => line.trimEnd().replace(/;$/, '')).join('\n');
+        
+        // Fix malformed edge labels like -->|label|> which should be -->|label|
+        mermaidCode = mermaidCode.replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|');
 
         console.log("Sanitized Mermaid Code:", mermaidCode);
 
