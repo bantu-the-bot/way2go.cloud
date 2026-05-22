@@ -88,6 +88,7 @@ function App() {
   const [renderedChart, setRenderedChart] = useState(chart)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'ai' | 'editor'>('ai')
+  const [mode, setMode] = useState<'default' | 'architecture'>('default')
   const [showShareTooltip, setShowShareTooltip] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>(() => {
@@ -205,7 +206,8 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           current_code: chart, 
-          instruction 
+          instruction,
+          mode
         }),
       })
 
@@ -216,8 +218,14 @@ function App() {
 
       const data = await response.json()
       if (data.chart) {
-        setChart(data.chart)
-        setMessages([...newMessages, { role: 'assistant', content: 'Diagram updated successfully.' }])
+        // Robust Frontend Sanitization
+        let cleanChart = data.chart;
+        cleanChart = cleanChart.replace(/```mermaid\n?/g, '');
+        cleanChart = cleanChart.replace(/```\n?/g, '');
+        cleanChart = cleanChart.trim();
+
+        setChart(cleanChart)
+        setMessages([...newMessages, { role: 'assistant', content: mode === 'architecture' ? 'Architecture simplified and updated.' : 'Diagram updated successfully.' }])
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -388,6 +396,18 @@ function App() {
             <div className="flex-1 glass rounded-xl overflow-hidden flex flex-col shadow-2xl min-h-0">
               {activeTab === 'ai' ? (
                 <>
+                  <div className="bg-slate-800/30 border-b border-slate-700/30 px-4 py-2 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Architect Assistant</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Architecture Mode</span>
+                      <button 
+                        onClick={() => setMode(mode === 'default' ? 'architecture' : 'default')}
+                        className={`w-8 h-4 rounded-full relative transition-colors duration-200 ${mode === 'architecture' ? 'bg-blue-600' : 'bg-slate-700'}`}
+                      >
+                        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-200 ${mode === 'architecture' ? 'left-4.5' : 'left-0.5'}`} />
+                      </button>
+                    </div>
+                  </div>
                   {/* Message History */}
                   <div 
                     ref={scrollRef}

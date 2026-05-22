@@ -4,6 +4,14 @@ interface Env {
   };
 }
 
+const ARCHITECTURE_SIMPLIFIER_PROMPT = `You are a senior systems architect. Your sole task is to ingest infrastructure descriptions and translate them into clean, valid Mermaid.js graph definitions using a Top-Down (TD) layout.
+
+CRITICAL RULES:
+1. ONLY return the raw Mermaid.js code block starting with \`\`\`mermaid and ending with \`\`\`. Do not include conversational text, summaries, or introductions.
+2. Group logical boundaries using 'subgraph'.
+3. Apply clean node styling constants at the top of the graph definition to maintain a professional, dark-mode architect aesthetic.
+4. Ensure all node IDs are strictly alphanumeric and contain no special characters or spaces.`;
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -11,7 +19,7 @@ export default {
     // Route API requests
     if (url.pathname === '/api/generate' && request.method === 'POST') {
       try {
-        const { current_code, instruction } = await request.json() as { current_code?: string; instruction: string };
+        const { current_code, instruction, mode } = await request.json() as { current_code?: string; instruction: string; mode?: 'default' | 'architecture' };
 
         if (!instruction) {
           return new Response(JSON.stringify({ error: 'No instruction provided' }), {
@@ -20,15 +28,22 @@ export default {
           });
         }
 
-        const systemPrompt = current_code
-          ? `You are an expert systems architect and Mermaid.js syntax master. 
+        let systemPrompt = '';
+        let temperature = 0.6;
+
+        if (mode === 'architecture') {
+          systemPrompt = ARCHITECTURE_SIMPLIFIER_PROMPT;
+          temperature = 0.2;
+        } else {
+          systemPrompt = current_code
+            ? `You are an expert systems architect and Mermaid.js syntax master. 
 You will receive the CURRENT Mermaid code of an architecture diagram and a MODIFICATION REQUEST. 
 Perform a surgical update to the code to satisfy the request. 
 Maintain the existing structure where possible.
 Return ONLY the raw, updated Mermaid code block. 
 Do NOT include markdown code fences (like \`\`\`mermaid).
 Do NOT include any explanations or extra text.`
-          : `You are an elite cloud architect and Mermaid.js specialist.
+            : `You are an elite cloud architect and Mermaid.js specialist.
 Your task is to convert infrastructure descriptions into professional, high-fidelity Mermaid.js diagrams.
 
 - Use 'graph TD'.
@@ -39,18 +54,20 @@ Your task is to convert infrastructure descriptions into professional, high-fide
 - NO markdown markers (\`\`\`mermaid or \`\`\`).
 - NO explanations, NO introductory text, NO "Here is your code". 
 - Just the graph syntax.`;
+        }
 
-        const userPrompt = current_code 
+        const userPrompt = (mode !== 'architecture' && current_code)
           ? `CURRENT CODE:\n${current_code}\n\nMODIFICATION REQUEST:\n${instruction}`
           : instruction;
 
-        console.log("Processing diagram request:", { isUpdate: !!current_code });
+        console.log("Processing diagram request:", { isUpdate: !!current_code, mode });
 
         const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
+          temperature,
         });
 
         let mermaidCode = aiResponse.response || '';
@@ -91,11 +108,6 @@ Your task is to convert infrastructure descriptions into professional, high-fide
       }
     }
 
-    // Fallback to assets for non-API routes is handled by Cloudflare 
-    // when [assets] is present in wrangler.toml and no response is returned 
-    // or when we don't match the route.
-    // However, for safety in some configurations, we can return nothing 
-    // or a 404 which the assets middleware will catch.
     return new Response('Not Found', { status: 404 });
   },
 };
