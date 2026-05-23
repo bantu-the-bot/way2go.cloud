@@ -17,8 +17,30 @@ const sanitizeMermaid = (code: string): string => {
     .split('\n')
     .map(line => line.trimEnd().replace(/;$/, '')) // Remove trailing semicolons
     .join('\n')
-    .replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|'); // Fix malformed edge labels -->|label|>
+    .replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|') // Fix malformed edge labels -->|label|>
+    .replace(/--\s*"([^"]+)"\s*-->/g, '-->|$1|'); // Normalize legacy edge labels -- "label" -->
 };
+
+const BrandMark = ({ compact = false }: { compact?: boolean }) => (
+  <div
+    className={`relative flex shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white shadow-lg shadow-blue-900/20 ring-1 ring-slate-700/60 dark:bg-slate-900 ${
+      compact ? 'h-8 w-8' : 'h-10 w-10'
+    }`}
+    aria-hidden="true"
+  >
+    <svg className={compact ? 'h-6 w-6' : 'h-7 w-7'} viewBox="0 0 40 40" fill="none">
+      <path
+        d="M10 23.5C7.8 23.5 6 21.7 6 19.5C6 17.6 7.3 16 9.1 15.6C9.9 12.7 12.6 10.5 15.8 10.5C18 10.5 20.1 11.6 21.4 13.3C22.2 12.9 23.1 12.7 24.1 12.7C27.4 12.7 30 15.3 30 18.6C32.3 18.8 34 20.7 34 23C34 25.5 32 27.5 29.5 27.5H10Z"
+        className="fill-slate-800 stroke-slate-300 dark:fill-slate-950 dark:stroke-slate-400"
+        strokeWidth="1.8"
+      />
+      <path d="M14 25.5L20 31L26 25.5M20 18V30.5" className="stroke-blue-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="14" cy="25.5" r="2.2" className="fill-cyan-300" />
+      <circle cx="20" cy="18" r="2.2" className="fill-blue-400" />
+      <circle cx="26" cy="25.5" r="2.2" className="fill-indigo-300" />
+    </svg>
+  </div>
+)
 
 const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string | null) => void }) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -201,7 +223,7 @@ function App() {
       title: 'Morning Routine Logic',
       category: 'Decision Tree',
       inputText: 'Wake up at 6 AM. Check energy levels. If feeling tired, drink a glass of water and stretch for 5 minutes. If feeling alert, go straight to making coffee. Afterward, brush teeth, eat breakfast, and start the workday.',
-      chartState: 'graph TD\n    A["Wake up at 6 AM"] --> B{"Feeling Tired?"}\n    B -- "Yes" --> C["Water & Stretch"]\n    B -- "No" --> D["Make Coffee"]\n    C --> E["Brush Teeth"]\n    D --> E\n    E --> F["Eat Breakfast"]\n    F --> G["Start Workday"]'
+      chartState: 'graph TD\n    A["Wake up at 6 AM"] --> B{"Feeling Tired?"}\n    B -->|Yes| C["Water & Stretch"]\n    B -->|No| D["Make Coffee"]\n    C --> E["Brush Teeth"]\n    D --> E\n    E --> F["Eat Breakfast"]\n    F --> G["Start Workday"]'
     },
     {
       id: 3,
@@ -276,7 +298,7 @@ function App() {
         cleanChart = cleanChart.replace(/```\n?/g, '');
         cleanChart = cleanChart.trim();
 
-        setChart(cleanChart)
+        setChart(sanitizeMermaid(cleanChart))
         setMessages([...newMessages, { role: 'assistant', content: mode === 'architecture' ? 'Architecture simplified and updated.' : 'Diagram updated successfully.' }])
       }
     } catch (error) {
@@ -366,9 +388,12 @@ function App() {
       {/* Sidebar - Desktop Only */}
       <aside className="hidden md:flex w-64 border-r border-slate-200 dark:border-slate-800 flex-col flex-shrink-0 bg-white dark:bg-[#0f172a] transition-colors duration-200">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">W</div>
-            <span className="font-bold text-lg tracking-tight">way2go.cloud</span>
+          <div className="flex items-center gap-3">
+            <BrandMark />
+            <div className="min-w-0">
+              <div className="text-sm font-bold tracking-tight text-slate-950 dark:text-white">Way2Go</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Architecture Studio</div>
+            </div>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
@@ -398,14 +423,17 @@ function App() {
         <header className="min-h-[4rem] border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-20 py-2 md:py-0 gap-4 transition-colors duration-200">
           <div className="flex items-center gap-3">
             {/* Mobile Logo */}
-            <div className="md:hidden w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">W</div>
+            <div className="md:hidden">
+              <BrandMark compact />
+            </div>
             <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
-              <span className="hidden sm:inline">Architect Workspace / </span>
+              <span className="hidden sm:inline text-slate-700 dark:text-slate-300">Way2Go Cloud Modeler</span>
+              <span className="hidden sm:inline text-slate-400 dark:text-slate-600"> / </span>
               <button 
                 onClick={resetWorkspace}
                 className="text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               >
-                New Diagram
+                New Architecture
               </button>
             </h2>
           </div>
@@ -446,13 +474,6 @@ function App() {
                   Live Code Editor
                 </button>
               </div>
-              <button 
-                onClick={resetWorkspace}
-                className="text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-wider flex items-center gap-1.5 transition-colors group"
-              >
-                <svg className="w-3 h-3 group-hover:rotate-[-45deg] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Reset
-              </button>
             </div>
             
             <div className="flex-1 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-xl dark:shadow-2xl min-h-0 transition-colors duration-200">
@@ -504,7 +525,7 @@ function App() {
                   <div className="p-3 md:p-4 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 space-y-3 transition-colors duration-200">
                     <div className="relative">
                       <textarea
-                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 pr-24 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px] transition-colors duration-200"
+                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 pr-12 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px] transition-colors duration-200"
                         placeholder="Refine your design... (e.g., 'Add a Redis cache layer')"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -515,17 +536,6 @@ function App() {
                           }
                         }}
                       />
-                      <button
-                        onClick={resetWorkspace}
-                        type="button"
-                        className="absolute bottom-3 right-14 p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md transition-all active:scale-95"
-                        title="Clear canvas"
-                        aria-label="Clear canvas"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                       <button
                         onClick={handleGenerate}
                         disabled={isLoading || !input.trim()}
@@ -628,6 +638,18 @@ function App() {
               
               <div className="flex-1 bg-white dark:bg-white overflow-auto flex items-start justify-center p-4 md:p-8 mermaid-container relative">
                 <Mermaid chart={renderedChart} onError={setRenderError} />
+                <button
+                  onClick={resetWorkspace}
+                  type="button"
+                  className="absolute bottom-4 right-4 z-10 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/50 backdrop-blur-sm px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 shadow-lg flex items-center gap-1.5"
+                  title="Clear canvas"
+                  aria-label="Clear canvas"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Clear
+                </button>
               </div>
             </div>
           </section>
