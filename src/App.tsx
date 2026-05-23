@@ -22,6 +22,7 @@ const sanitizeMermaid = (code: string): string => {
 
 const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string | null) => void }) => {
   const ref = useRef<HTMLDivElement>(null)
+  const renderCycle = useRef(0)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   // Redraw on resize to fix spacing collisions
@@ -38,6 +39,7 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
   }, [])
 
   useEffect(() => {
+    const cycle = ++renderCycle.current
     if (ref.current && chart) {
       const renderDiagram = async () => {
         try {
@@ -47,13 +49,15 @@ const Mermaid = ({ chart, onError }: { chart: string; onError?: (error: string |
             'mermaid-svg-' + Math.random().toString(36).substring(2, 11),
             sanitizedChart
           )
-          if (ref.current) {
+          if (ref.current && cycle === renderCycle.current) {
             ref.current.innerHTML = svg
             onError?.(null)
           }
         } catch (err) {
-          console.error('Mermaid render error:', err)
-          onError?.('Invalid Mermaid Syntax: Please check your code structure.')
+          if (cycle === renderCycle.current) {
+            console.error('Mermaid render error:', err)
+            onError?.('Invalid Mermaid Syntax: Please check your code structure.')
+          }
         }
       }
       renderDiagram()
@@ -137,6 +141,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const generationRequestRef = useRef(0)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -239,6 +244,7 @@ function App() {
     const instruction = input.trim()
     if (!instruction) return
     
+    const requestId = ++generationRequestRef.current
     setIsLoading(true)
     const newMessages = [...messages, { role: 'user' as const, content: instruction }]
     setMessages(newMessages)
@@ -261,6 +267,8 @@ function App() {
       }
 
       const data = await response.json()
+      if (requestId !== generationRequestRef.current) return
+
       if (data.chart) {
         // Robust Frontend Sanitization
         let cleanChart = data.chart;
@@ -272,23 +280,31 @@ function App() {
         setMessages([...newMessages, { role: 'assistant', content: mode === 'architecture' ? 'Architecture simplified and updated.' : 'Diagram updated successfully.' }])
       }
     } catch (error) {
+      if (requestId !== generationRequestRef.current) return
+
       const message = error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Generation error:', error)
       setMessages([...newMessages, { role: 'assistant', content: `Error: ${message}` }])
     } finally {
-      setIsLoading(false)
+      if (requestId === generationRequestRef.current) {
+        setIsLoading(false)
+      }
     }
   }
 
   const resetWorkspace = useCallback(() => {
-    if (confirm('Are you sure you want to clear the current diagram and history?')) {
-      setChart('')
-      setRenderedChart('')
-      setMessages([
-        { role: 'assistant', content: 'Workspace cleared. Describe your new architecture to begin.' }
-      ])
-      setInput('')
-      setActiveTab('ai')
+    generationRequestRef.current += 1
+    setInput('')
+    setChart('')
+    setRenderedChart('')
+    setMessages([])
+    setIsLoading(false)
+    setRenderError(null)
+    setActiveTab('ai')
+    setShowShareTooltip(false)
+
+    if (typeof window !== 'undefined' && window.location.search) {
+      window.history.replaceState({}, '', `${window.location.origin}${window.location.pathname}`)
     }
   }, [])
 
@@ -488,7 +504,7 @@ function App() {
                   <div className="p-3 md:p-4 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 space-y-3 transition-colors duration-200">
                     <div className="relative">
                       <textarea
-                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 pr-12 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px] transition-colors duration-200"
+                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 pr-24 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/50 resize-none min-h-[80px] transition-colors duration-200"
                         placeholder="Refine your design... (e.g., 'Add a Redis cache layer')"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -499,6 +515,17 @@ function App() {
                           }
                         }}
                       />
+                      <button
+                        onClick={resetWorkspace}
+                        type="button"
+                        className="absolute bottom-3 right-14 p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md transition-all active:scale-95"
+                        title="Clear canvas"
+                        aria-label="Clear canvas"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                       <button
                         onClick={handleGenerate}
                         disabled={isLoading || !input.trim()}
