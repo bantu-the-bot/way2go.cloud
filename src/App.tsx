@@ -13,12 +13,19 @@ mermaid.initialize({
 
 const sanitizeMermaid = (code: string): string => {
   if (!code) return '';
-  return code
+  let cleaned = code
     .split('\n')
     .map(line => line.trimEnd().replace(/;$/, '')) // Remove trailing semicolons
     .join('\n')
     .replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|') // Fix malformed edge labels -->|label|>
     .replace(/--\s*"([^"]+)"\s*-->/g, '-->|$1|'); // Normalize legacy edge labels -- "label" -->
+
+  // Auto-wrap unquoted node labels in double quotes to prevent syntax errors on spaces
+  cleaned = cleaned.replace(/\b([A-Za-z0-9_]+)\[([^"\]]+)\]/g, '$1["$2"]');
+  cleaned = cleaned.replace(/\b([A-Za-z0-9_]+)\(([^"\)]+)\)/g, '$1("$2")');
+  cleaned = cleaned.replace(/\b([A-Za-z0-9_]+)\{([^"\}]+)\}/g, '$1{"$2"}');
+
+  return cleaned;
 };
 
 const BrandMark = ({ compact = false }: { compact?: boolean }) => (

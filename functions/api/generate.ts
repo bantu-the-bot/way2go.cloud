@@ -165,6 +165,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Fix malformed edge labels like -->|label|> which should be -->|label|
     mermaidCode = mermaidCode.replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|');
 
+    // Auto-wrap unquoted node labels in double quotes to prevent syntax errors on spaces
+    mermaidCode = mermaidCode.replace(/\b([A-Za-z0-9_]+)\[([^"\]]+)\]/g, '$1["$2"]');
+    mermaidCode = mermaidCode.replace(/\b([A-Za-z0-9_]+)\(([^"\)]+)\)/g, '$1("$2")');
+    mermaidCode = mermaidCode.replace(/\b([A-Za-z0-9_]+)\{([^"\}]+)\}/g, '$1{"$2"}');
+
     return new Response(JSON.stringify({ chart: mermaidCode }), {
       headers: { 'Content-Type': 'application/json' },
     });
