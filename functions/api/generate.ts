@@ -16,15 +16,17 @@ CRITICAL RULES:
 6. A node belongs to exactly ONE subgraph. Do not define or reference a node inside multiple 'subgraph' blocks. If a node connects multiple boundaries, define it outside or in its primary parent.
 7. Wrap ALL node labels in double quotes (e.g., NodeID["Label Text"]).
 8. MANDATORY: DO NOT use double quotes INSIDE a label. If you need to emphasize something, use single quotes (e.g., NodeID["'Port Channel' Solution"]). Nested double quotes will break the parser.
-9. Edge labels must be formatted as NodeA -->|Label| NodeB. NEVER add a trailing '>' inside the label pipes.
-10. Avoid using reserved words like 'end', 'graph', or 'subgraph' as node IDs or unquoted labels.
-11. Do NOT use semicolons at the end of Mermaid syntax lines.`;
+9. MANDATORY: DO NOT use literal newlines inside label quotes. If you need a line break inside a label, use <br> instead (e.g., NodeID["First Line<br>Second Line"]).
+10. Edge labels must be formatted as NodeA -->|Label| NodeB. NEVER add a trailing '>' inside the label pipes.
+11. Avoid using reserved words like 'end', 'graph', or 'subgraph' as node IDs or unquoted labels.
+12. Do NOT use semicolons at the end of Mermaid syntax lines.`;
 
 const DEFAULT_SYSTEM_PROMPT = `You are a cloud architect and Mermaid.js expert. 
 Convert the following software infrastructure description into a valid Mermaid.js flowchart.
 - Use 'flowchart TD' or 'flowchart LR'.
 - Use descriptive node names and wrap ALL labels in double quotes.
 - MANDATORY: DO NOT use double quotes INSIDE a label. Use single quotes instead.
+- MANDATORY: DO NOT use literal newlines inside label quotes. Use <br> instead.
 - Node IDs MUST be unique and must not conflict with subgraph IDs. Use 'SG_' prefix for subgraphs if helpful.
 - A node can only belong to one subgraph.
 - Edge labels must be formatted as NodeA -->|Label| NodeB.
@@ -37,6 +39,7 @@ You will receive the CURRENT Mermaid code of an architecture diagram and a MODIF
 Perform a surgical update to the code to satisfy the request. 
 Maintain the existing structure where possible and wrap ALL labels in double quotes.
 MANDATORY: DO NOT use double quotes INSIDE a label. Use single quotes instead.
+MANDATORY: DO NOT use literal newlines inside label quotes. Use <br> instead.
 Node IDs MUST be unique and must not conflict with subgraph IDs. Use 'SG_' prefix for subgraphs to avoid collisions.
 A node can only belong to one subgraph. Do not place the same node in multiple subgraphs.
 Edge labels must be formatted as NodeA -->|Label| NodeB. NEVER add a trailing '>' after the second pipe.
@@ -107,6 +110,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
       messages: messagesToSend,
       temperature,
+      max_tokens: 2500,
     });
 
     // Workers AI returns an object with a 'response' string for text generation
@@ -164,6 +168,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     
     // Fix malformed edge labels like -->|label|> which should be -->|label|
     mermaidCode = mermaidCode.replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|');
+
+    // Replace literal newlines inside double-quoted strings with <br> to prevent syntax errors
+    mermaidCode = mermaidCode.replace(/"([^"]*)"/g, (_match, p1) => {
+      return `"${p1.replace(/\r?\n/g, '<br>')}"`;
+    });
 
     // Auto-wrap unquoted node labels in double quotes to prevent syntax errors on spaces
     mermaidCode = mermaidCode.replace(/\b([A-Za-z0-9_]+)\[([^"\]]+)\]/g, '$1["$2"]');
