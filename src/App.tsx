@@ -152,6 +152,30 @@ const decompressState = (str: string): AppState | null => {
 
 const INITIAL_CHART = 'graph TD\n    A[Cloud Front] --> B[Edge Worker]\n    B --> C[Vector Database]\n    B --> D[Static Assets]'
 
+const EXAMPLES = [
+  {
+    id: 1,
+    title: 'E-Commerce Order Journey',
+    category: 'Process Flow',
+    inputText: 'A customer places an order online. The payment is approved. The warehouse packs the items. The courier picks up the package. The package is delivered to the customer\'s doorstep.',
+    chartState: 'graph LR\n    A["Order Placed"] --> B["Payment Approved"]\n    B --> C["Warehouse Packing"]\n    C --> D["Courier Pickup"]\n    D --> E["Delivered"]'
+  },
+  {
+    id: 2,
+    title: 'Morning Routine Logic',
+    category: 'Decision Tree',
+    inputText: 'Wake up at 6 AM. Check energy levels. If feeling tired, drink a glass of water and stretch for 5 minutes. If feeling alert, go straight to making coffee. Afterward, brush teeth, eat breakfast, and start the workday.',
+    chartState: 'graph TD\n    A["Wake up at 6 AM"] --> B{"Feeling Tired?"}\n    B -->|Yes| C["Water & Stretch"]\n    B -->|No| D["Make Coffee"]\n    C --> E["Brush Teeth"]\n    D --> E\n    E --> F["Eat Breakfast"]\n    F --> G["Start Workday"]'
+  },
+  {
+    id: 3,
+    title: 'Product Launch Strategy',
+    category: 'Mind Map',
+    inputText: 'Our Core Marketing Strategy splits into three main channels: Social Media, Content Marketing, and Paid Ads. Under Social Media, we will target TikTok and Instagram. Content Marketing will consist of weekly Blogs and Newsletters. Paid Ads will run on Google and Meta.',
+    chartState: 'graph TD\n    Core["Product Launch"] --> SM["Social Media"]\n    Core --> CM["Content Marketing"]\n    Core --> PA["Paid Ads"]\n    SM --> TikTok["TikTok"]\n    SM --> IG["Instagram"]\n    CM --> Blogs["Blogs"]\n    CM --> NL["Newsletters"]\n    PA --> Google["Google"]\n    PA --> Meta["Meta"]'
+  }
+]
+
 const getInitialState = () => {
   if (typeof window === 'undefined') return null
   const params = new URLSearchParams(window.location.search)
@@ -170,12 +194,13 @@ function App() {
   const [renderedChart, setRenderedChart] = useState(chart)
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'default' | 'architecture'>(urlState?.mode || 'default')
-  const [isDrawerOpen, setIsDrawerOpen] = useState(true)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isPresetsOpen, setIsPresetsOpen] = useState(false)
   const [showShareTooltip, setShowShareTooltip] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>(() => {
     if (urlState?.messages) return urlState.messages
-    return [{ role: 'assistant', content: 'Welcome! Describe the architecture you want to build, or choose an example to get started.' }]
+    return [{ role: 'assistant', content: 'Welcome! Loaded default preset blueprint. Describe the changes you want to make, or click \'PRESETS\' to load another blueprint.' }]
   })
 
   const generationRequestRef = useRef(0)
@@ -202,6 +227,16 @@ function App() {
     setShowShareTooltip(true)
     setTimeout(() => setShowShareTooltip(false), 2000)
   }, [input, chart, messages, mode])
+
+  const loadExample = (example: typeof EXAMPLES[0]) => {
+    setInput('')
+    setChart(example.chartState)
+    setRenderedChart(example.chartState)
+    setMessages([
+      { role: 'assistant', content: `Loaded Preset Blueprint: ${example.title}` }
+    ])
+    setIsPresetsOpen(false)
+  }
 
   const handleGenerate = async () => {
     const instruction = input.trim()
@@ -358,6 +393,17 @@ function App() {
       <section className="pointer-events-none fixed right-4 top-4 z-30 w-[min(330px,calc(100vw-2rem))]">
         <div className="pointer-events-auto rounded-2xl border border-slate-800/80 bg-slate-950/72 px-3 py-3 shadow-2xl shadow-black/30 backdrop-blur-md">
           <div className="grid grid-cols-[72px_1fr] items-center gap-x-3 gap-y-2 font-mono text-[10px] uppercase tracking-[0.22em]">
+            <span className="text-slate-500">PRESETS</span>
+            <button
+              onClick={() => setIsPresetsOpen((v) => !v)}
+              className={`justify-self-end rounded-md border px-2 py-1 text-[10px] font-bold tracking-[0.18em] transition-colors ${
+                isPresetsOpen
+                  ? 'border-cyan-400/30 bg-cyan-400/15 text-cyan-100'
+                  : 'border-slate-700/70 bg-slate-900/70 text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              {isPresetsOpen ? 'ACTIVE' : 'SHOW'}
+            </button>
             <span className="text-slate-500">MODE</span>
             <button
               onClick={() => setMode(mode === 'default' ? 'architecture' : 'default')}
@@ -383,12 +429,12 @@ function App() {
             >
               SEND
             </button>
-            <span className="text-slate-500">CLEAR</span>
+            <span className="text-slate-500">RESET</span>
             <button
               onClick={resetWorkspace}
               className="justify-self-end rounded-md border border-slate-700/70 bg-slate-900/70 px-2 py-1 text-[10px] font-bold tracking-[0.18em] text-slate-300 transition-colors hover:bg-slate-800"
             >
-              PURGE
+              CLEAR
             </button>
             <span className="text-slate-500">THEME</span>
             <div className="justify-self-end">
@@ -412,6 +458,21 @@ function App() {
           {showShareTooltip && (
             <div className="mt-2 text-right font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-200/70">
               LINK COPIED
+            </div>
+          )}
+          {isPresetsOpen && (
+            <div className="mt-3 border-t border-slate-800/80 pt-3 space-y-2 max-h-[220px] overflow-y-auto pointer-events-auto">
+              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-2">Preset Blueprints</div>
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex.id}
+                  onClick={() => loadExample(ex)}
+                  className="w-full text-left rounded-lg border border-slate-800/50 bg-slate-900/40 p-2 hover:bg-slate-800/60 transition-colors cursor-pointer"
+                >
+                  <div className="text-xs font-semibold text-white leading-snug">{ex.title}</div>
+                  <div className="mt-1 text-[8px] font-bold uppercase tracking-wider text-cyan-400">{ex.category}</div>
+                </button>
+              ))}
             </div>
           )}
         </div>
