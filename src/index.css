@@ -52,23 +52,35 @@ html, body {
 
 /* Mermaid SVG Responsiveness */
 .mermaid-container svg {
-  max-width: 100% !important;
+  max-width: min(1000px, 90vw) !important;
+  max-height: 70vh !important;
+  width: auto !important;
   height: auto !important;
   display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 0 30px rgba(34, 211, 238, 0.12));
 }
 
 .mermaid-container {
   width: 100% !important;
   max-width: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Force dark text for Mermaid labels inside the white canvas */
+/* Force premium light text for Mermaid labels in dark mode */
 .mermaid-container svg text,
 .mermaid-container .node label,
 .mermaid-container .edgeLabel,
 .mermaid-container .cluster-label {
-  fill: #0f172a !important;
-  color: #0f172a !important;
+  fill: #f8fafc !important;
+  color: #f8fafc !important;
+}
+
+.mermaid-container .edgeLabel text {
+  fill: #cbd5e1 !important;
+  color: #cbd5e1 !important;
 }
 
 /* Prevent foreignObject clipping (subgraph/node labels) */

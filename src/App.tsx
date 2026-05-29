@@ -6,9 +6,21 @@ import { ThemeToggle } from './ThemeToggle'
 
 mermaid.initialize({
   startOnLoad: true,
-  theme: 'neutral',
+  theme: 'base',
   securityLevel: 'loose',
   fontFamily: 'var(--sans)',
+  themeVariables: {
+    background: 'transparent',
+    primaryColor: 'rgba(9, 15, 28, 0.75)', // Sleek translucent dark slate
+    primaryTextColor: '#f8fafc', // Slate-50
+    primaryBorderColor: 'rgba(34, 211, 238, 0.45)', // Cyan border
+    lineColor: '#06b6d4', // Cyan edges
+    arrowheadColor: '#06b6d4',
+    clusterBkg: 'rgba(15, 23, 42, 0.3)',
+    clusterBorder: 'rgba(100, 116, 139, 0.4)',
+    edgeLabelBackground: '#05070B',
+    textColor: '#e2e8f0',
+  }
 })
 
 const sanitizeMermaid = (code: string): string => {
