@@ -20,6 +20,11 @@ const sanitizeMermaid = (code: string): string => {
     .replace(/-->\s*\|([^|]+)\|\s*>/g, '-->|$1|') // Fix malformed edge labels -->|label|>
     .replace(/--\s*"([^"]+)"\s*-->/g, '-->|$1|'); // Normalize legacy edge labels -- "label" -->
 
+  // Replace literal newlines inside double-quoted strings with <br> to prevent syntax errors
+  cleaned = cleaned.replace(/"([^"]*)"/g, (_match, p1) => {
+    return `"${p1.replace(/\r?\n/g, '<br>')}"`
+  })
+
   // Auto-wrap unquoted node labels in double quotes to prevent syntax errors on spaces
   cleaned = cleaned.replace(/\b([A-Za-z0-9_]+)\[([^"\]]+)\]/g, '$1["$2"]');
   cleaned = cleaned.replace(/\b([A-Za-z0-9_]+)\(([^"\)]+)\)/g, '$1("$2")');
