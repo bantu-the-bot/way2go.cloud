@@ -279,7 +279,8 @@ function App() {
         body: JSON.stringify({ 
           current_code: chart, 
           instruction,
-          mode
+          mode,
+          messages: newMessages
         }),
       })
 

@@ -48,7 +48,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   try {
-    const { current_code, instruction, mode } = await request.json() as { current_code?: string; instruction: string; mode?: 'default' | 'architecture' };
+    const { current_code, instruction, mode, messages } = await request.json() as { 
+      current_code?: string; 
+      instruction: string; 
+      mode?: 'default' | 'architecture';
+      messages?: { role: 'user' | 'assistant'; content: string }[];
+    };
 
     if (!instruction) {
       return new Response(JSON.stringify({ error: 'No instruction provided' }), {
@@ -67,15 +72,40 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       systemPrompt = current_code ? UPDATE_SYSTEM_PROMPT : DEFAULT_SYSTEM_PROMPT;
     }
 
-    const userPrompt = (mode !== 'architecture' && current_code)
-      ? `CURRENT CODE:\n${current_code}\n\nMODIFICATION REQUEST:\n${instruction}`
-      : instruction;
+    const messagesToSend: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (messages && messages.length > 0) {
+      // Map previous messages, filtering out welcome messages and errors
+      const history = messages.filter(msg => {
+        if (msg.role === 'assistant' && msg.content.startsWith('Welcome!')) return false;
+        if (msg.role === 'assistant' && msg.content.startsWith('Error:')) return false;
+        return true;
+      });
+
+      for (let i = 0; i < history.length; i++) {
+        const msg = history[i];
+        if (i === history.length - 1 && msg.role === 'user') {
+          // Format the latest user message with the current code so the LLM acts surgically on the latest state
+          const formattedContent = (mode !== 'architecture' && current_code)
+            ? `CURRENT CODE:\n${current_code}\n\nMODIFICATION REQUEST:\n${msg.content}`
+            : msg.content;
+          messagesToSend.push({ role: 'user', content: formattedContent });
+        } else {
+          messagesToSend.push({ role: msg.role, content: msg.content });
+        }
+      }
+    } else {
+      // Fallback if no messages array is provided
+      const userPrompt = (mode !== 'architecture' && current_code)
+        ? `CURRENT CODE:\n${current_code}\n\nMODIFICATION REQUEST:\n${instruction}`
+        : instruction;
+      messagesToSend.push({ role: 'user', content: userPrompt });
+    }
 
     const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
+      messages: messagesToSend,
       temperature,
     });
 
