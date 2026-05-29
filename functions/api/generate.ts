@@ -113,21 +113,38 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     let mermaidCode = response.response || (typeof response === 'string' ? response : '');
 
     // Robust Sanitization:
-    // 1. If backticks are present, extract only the content between the first and last triple backtick
+    const keywords = ['graph ', 'flowchart ', 'sequenceDiagram', 'stateDiagram', 'erDiagram', 'gantt', 'classDiagram', 'gitGraph', 'pie', 'journey', 'architecture'];
+
+    // 1. If backticks are present, extract only the content inside the actual code block
     if (mermaidCode.includes('```')) {
       const parts = mermaidCode.split('```');
-      // The content is usually in the second part if there's only one block
-      // But we take the largest block to be safe if multiple exist
-      mermaidCode = parts.reduce((a, b) => a.length > b.length ? a : b);
-      // Strip 'mermaid' language identifier if it remained at the start
-      mermaidCode = mermaidCode.replace(/^mermaid\n?/, '');
+      let foundBlock = '';
+      
+      // Look for a block (at odd indices) that contains standard Mermaid keywords or "mermaid"
+      for (let i = 1; i < parts.length; i += 2) {
+        const partClean = parts[i].trim();
+        const hasKeyword = keywords.some(kw => partClean.includes(kw)) || partClean.startsWith('mermaid');
+        if (hasKeyword) {
+          foundBlock = parts[i];
+          break;
+        }
+      }
+      
+      // Fallback: if no block matched the keywords, take the first code block (index 1) if it exists
+      if (!foundBlock && parts.length >= 3) {
+        foundBlock = parts[1];
+      }
+      
+      if (foundBlock) {
+        mermaidCode = foundBlock.replace(/^mermaid\n?/, '');
+      }
     }
 
     // 2. Identify the likely start of the diagram to strip any remaining leading chatter
-    const keywords = ['graph ', 'flowchart ', 'sequenceDiagram', 'stateDiagram', 'erDiagram', 'gantt', 'classDiagram', 'gitGraph', 'pie', 'journey', 'architecture'];
+    const strictStarters = ['flowchart ', 'flowchart\n', 'graph ', 'graph\n', 'sequenceDiagram', 'stateDiagram', 'erDiagram', 'gantt', 'classDiagram', 'gitGraph', 'pie', 'journey', 'architecture'];
     let startIndex = -1;
 
-    for (const kw of keywords) {
+    for (const kw of strictStarters) {
       const idx = mermaidCode.indexOf(kw);
       if (idx !== -1 && (startIndex === -1 || idx < startIndex)) {
         startIndex = idx;
